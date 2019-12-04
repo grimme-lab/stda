@@ -1,0 +1,31 @@
+20.02.2014: Version 1.2:
+
+    -Molden file now serves as input
+    -sTD-DFT method included
+
+26.08.2014: Version 1.3:
+
+    -Interfacing with Gaussian 09 possible (via g2molden) 
+
+29.10.2014: Version 1.4:
+
+    -sTDA program is now interfaced to TeraChem
+    -Eigenvectors may be printed (Turbomole format)
+    -small bugfixes 
+
+01.03.2016: Version 1.5: 
+
+    -xTB 
+    -velocity correction 
+    -make UKS available to public
+    
+13.02.2018: Version 1.6:
+
+    - linear and nonlinear response function (SHG)
+    - two-photon absorption
+    
+26.11.2019: Version 1.6.1:
+    
+    - state to state transitions
+    - SF-sTD-DFT
+    - NTOs

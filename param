@@ -1,0 +1,3 @@
+      parameter (ndi22  =100000)
+      parameter (maxat  =3000)
+      parameter (maxconf=1000000)
