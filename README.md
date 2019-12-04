@@ -34,6 +34,7 @@ stack overflows *will* occur. Use something along the lines of this:
 ```bash
 ulimit -s unlimited
 export OMP_STACKSIZE=4G
+```
 
 ## Usage
 
