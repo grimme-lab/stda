@@ -42,33 +42,22 @@ See the manual on the [release page](https://github.com/grimme-lab/stda/releases
 
 ## Citations
 
-- S. Grimme, A simplified Tamm–Dancoff density functional approach for the elec-
-tronic excitation spectra of very large molecules, *J. Chem. Phys.*, **2013**, 138, 244104.
+- S. Grimme, A simplified Tamm–Dancoff density functional approach for the electronic excitation spectra of very large molecules, *J. Chem. Phys.*, **2013**, 138, 244104.
   DOI: [10.1063/1.4811331](https://doi.org/10.1063/1.4811331)
 
-- C. Bannwarth, S. Grimme, A simplified time-dependent density functional the-
-ory approach for electronic ultraviolet and circular dichroism spectra of very large
-molecules, *Comput. Theor. Chem.*, **2014**, 1040 – 1041, 45 – 53.
+- C. Bannwarth, S. Grimme, A simplified time-dependent density functional theory approach for electronic ultraviolet and circular dichroism spectra of very large molecules, *Comput. Theor. Chem.*, **2014**, 1040 – 1041, 45 – 53.
   DOI: [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023)
 
-- S. Grimme and C. Bannwarth,  Ultra-fast computation of electronic spectra for large
-systems by tight-binding based simplified Tamm-Dancoff approximation (sTDA-
-xTB) *J. Chem. Phys.*, **2016**, 145, 054103.
+- S. Grimme and C. Bannwarth,  Ultra-fast computation of electronic spectra for large systems by tight-binding based simplified Tamm-Dancoff approximation (sTDA-xTB) *J. Chem. Phys.*, **2016**, 145, 054103.
   DOI: [10.1063/1.4959605](https://dx.doi.org/10.1063/1.4959605)
 
-- M. de Wergifosse, C. Bannwarth, S. Grimme, A simplified spin-flip time-dependent
-density functional theory (sf-sTD-DFT) approach for the electronic excitation spectra
-of very large diradicals, *J. Phys. Chem. A*, **2019**, 123 (27), 815–5825.
+- M. de Wergifosse, C. Bannwarth, S. Grimme, A simplified spin-flip time-dependent density functional theory (sf-sTD-DFT) approach for the electronic excitation spectra of very large diradicals, *J. Phys. Chem. A*, **2019**, 123 (27), 815–5825.
   DOI: [10.1021/acs.jpca.9b03176](https://doi.org/10.1021/acs.jpca.9b03176)
 
-- M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-
-dependent density functional theory (sTD-DFT) framework: Evaluation of the first
-hyperpolarizability, *J. Chem. Phys.*, **2018**, 149 (2), 024108.
+- M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-dependent density functional theory (sTD-DFT) framework: Evaluation of the first hyperpolarizability, *J. Chem. Phys.*, **2018**, 149 (2), 024108.
   DOI: [10.1063/1.5037665](https://doi.org/10.1063/1.5037665)
 
-- M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-
-dependent density functional theory (sTD-DFT) framework: Evaluation of excited-
-state absorption spectra, *J. Chem. Phys.*, **2019**, 150, 094112.
+- M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-dependent density functional theory (sTD-DFT) framework: Evaluation of excited-state absorption spectra, *J. Chem. Phys.*, **2019**, 150, 094112.
   DOI: [10.1063/1.5080199](https://doi.org/10.1063/1.5080199)
 
 ## License
