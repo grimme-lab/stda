@@ -62,12 +62,12 @@ of very large diradicals, *J. Phys. Chem. A*, **2019**, 123 (27), 815–5825.
   DOI: [10.1021/acs.jpca.9b03176](https://doi.org/10.1021/acs.jpca.9b03176)
 
 - M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-
-dependent density functional theory (std-dft) framework: Evaluation of the first
+dependent density functional theory (sTD-DFT) framework: Evaluation of the first
 hyperpolarizability, *J. Chem. Phys.*, **2018**, 149 (2), 024108.
   DOI: [10.1063/1.5037665](https://doi.org/10.1063/1.5037665)
 
 - M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-
-dependent density functional theory (std-dft) framework: Evaluation of excited-
+dependent density functional theory (sTD-DFT) framework: Evaluation of excited-
 state absorption spectra, *J. Chem. Phys.*, **2019**, 150, 094112.
   DOI: [10.1063/1.5080199](https://doi.org/10.1063/1.5080199)
 
