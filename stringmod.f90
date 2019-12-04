@@ -15,7 +15,8 @@
 ! You should have received a copy of the GNU Lesser General Public License
 ! along with stda.  If not, see <https://www.gnu.org/licenses/>.
 !
-module precision
+
+module strings
 
 ! Real kinds
 
@@ -31,13 +32,6 @@ integer, parameter :: ki8 = selected_int_kind(18)          ! double precision in
 
 integer, parameter :: kc4 = kr4                            ! single precision complex
 integer, parameter :: kc8 = kr8                            ! double precision complex
-
-end module precision
-
-
-module strings
-
-use precision
 
 private :: value_dr,value_sr,value_di,value_si
 private :: write_dr,write_sr,write_di,write_si

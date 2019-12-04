@@ -1,4 +1,21 @@
-module precision
+! This file is part of stda.
+!
+! Copyright (C) 2013-2019 Stefan Grimme
+!
+! stda is free software: you can redistribute it and/or modify it under
+! the terms of the GNU Lesser General Public License as published by
+! the Free Software Foundation, either version 3 of the License, or
+! (at your option) any later version.
+!
+! stda is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU Lesser General Public License for more details.
+!
+! You should have received a copy of the GNU Lesser General Public License
+! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+!
+module strings
 
 ! Real kinds
 
@@ -14,11 +31,6 @@ integer, parameter :: ki8 = selected_int_kind(18)          ! double precision in
 
 integer, parameter :: kc4 = kr4                            ! single precision complex
 integer, parameter :: kc8 = kr8                            ! double precision complex
-
-end module precision
-module strings
-
-use precision
 
 private :: value_dr,value_sr,value_di,value_si
 private :: write_dr,write_sr,write_di,write_si

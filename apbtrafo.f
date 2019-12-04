@@ -43,20 +43,20 @@ ccccccccccccccccccccccccccccccccccc
       ij=ij*(ij+1)/2
       allocate(bmat(ij))
 
-************** read B matrix (packed) **************************
+!************* read B matrix (packed) **************************
       open(unit=52,file='bmat',form='unformatted',status='old')
       read(52)bmat      
       close(52,status='delete')
-******************************************************************
+!*****************************************************************
 
-************** blow up 0.5*B and compute (0.5*B)*X *******************
+!************* blow up 0.5*B and compute (0.5*B)*X *******************
       allocate(upper(n,n))
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
       call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)      
       deallocate(upper)
-******************************************************************
+!*****************************************************************
 !
 !******************** scale with omega_TDA ************************
 !   compute divide by omega_TDA to yield  X_new 
@@ -70,7 +70,7 @@ ccccccccccccccccccccccccccccccccccc
 !
 !!! OLD ORTHOGONALIZATION PART - NOT USED ANYMORE 
 !
-************** compute overlap: S = (X_new)**T * (X_new) *********
+!************* compute overlap: S = (X_new)**T * (X_new) *********
 !      allocate(upper(nroot,nroot))
 !      upper=0.0
 !      ! compute overlap between xpy and xnew
@@ -344,22 +344,22 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       ij=ij*(ij+1)/2
       allocate(bmat(ij))
 
-************** read 0.5*B matrix (packed) ***********************
+!************* read 0.5*B matrix (packed) ***********************
       open(unit=52,file='bmat',form='unformatted',status='old')
       read(52)bmat      
       close(52,status='delete')
-******************************************************************
+!*****************************************************************
 
-************** blow up 0.5*B and compute (0.5*B)*X ***************
+!************* blow up 0.5*B and compute (0.5*B)*X ***************
       allocate(upper(n,n))
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
       call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)      
       deallocate(upper)
-******************************************************************
+!*****************************************************************
 !
-******************** scale with omega_TDA ************************
+!******************* scale with omega_TDA ************************
 !   divide by omega_TDA to yield  X_new 
       do i=1,nroot
          ef=1.0d0/(dble(e(i))+1.0d-8)
@@ -367,7 +367,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
             xnew(j,i)=ef*xnew(j,i)
          enddo
       enddo
-******************************************************************
+!*****************************************************************
 !
 ! testwise: orthogonalize the vectors
 !
@@ -573,9 +573,9 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       end subroutine apbtrafo_uks
 
 
-***********************************************************************
-* set up 0.5*B  (packed form) in RKS case
-***********************************************************************
+!**********************************************************************
+! set up 0.5*B  (packed form) in RKS case
+!**********************************************************************
       subroutine rtdacorr(nci,ncent,no,nv,mxcnf,iconf,dak,dax
      .                    ,ed,pia,qia,pij,qab)
       use omp_lib
@@ -634,13 +634,13 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       return
 
       end subroutine rtdacorr
-***********************************************************************
+!**********************************************************************
 
 
 
-***********************************************************************
-* set up 0.5*B  (packed form) in UKS case ! 
-***********************************************************************
+!**********************************************************************
+! set up 0.5*B  (packed form) in UKS case ! 
+!**********************************************************************
        subroutine utdacorr(nexa,nexb,ncent,noa,nva,nob,nvb,mxcnfa,
      .                    mxcnfb,iconfa,iconfb,dax,piaa,qiaa,
      .                    piab,qiab,pija,qaba,pijb,qabb)
@@ -747,7 +747,7 @@ c alpha-alpha block
       return
 
       end subroutine utdacorr
-***********************************************************************
+!**********************************************************************
 
 
 cccccccccccccccccccccccccccccccccccccc
@@ -776,20 +776,20 @@ cccccccccccccccccccccccccccccccccccccc
       write(*,'(A)',advance='yes') '  perform velo correction for X...'
       allocate(bmat(n*(n+1)/2))
 
-************** read B matrix (packed) **************************
+!************* read B matrix (packed) **************************
       open(unit=52,file='bmat',form='unformatted',status='old')
       read(52)bmat      
       close(52,status='delete')
-******************************************************************
+!*****************************************************************
 
-************** blow up 0.5*B and compute (0.5*B)*X *******************
+!************* blow up 0.5*B and compute (0.5*B)*X *******************
       allocate(upper(n,n))
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
       call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)      
       deallocate(upper)
-******************************************************************
+!*****************************************************************
 !
 !******************** scale with omega_TDA ************************
 !   compute divide by omega_TDA to yield  X_new 
@@ -1074,22 +1074,22 @@ cccccccccccccccccccccccccccccccccccccc
                                                                        
       allocate(bmat(n*(n+1)/2))                                        
                                                                        
-************** read 0.5*B matrix (packed) ***********************      
+!************* read 0.5*B matrix (packed) ***********************      
       open(unit=52,file='bmat',form='unformatted',status='old')        
       read(52)bmat                                                     
       close(52,status='delete')                                        
-******************************************************************     
+!*****************************************************************     
                                                                        
-************** blow up 0.5*B and compute (0.5*B)*X ***************     
+!************* blow up 0.5*B and compute (0.5*B)*X ***************     
       allocate(upper(n,n))                                             
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle                                                                                                                                                                                           
       deallocate(bmat)                                                 
       allocate(xnew(n,nroot))                                          
       call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)         
       deallocate(upper)                                                
-******************************************************************     
+!*****************************************************************     
 !                                                                      
-******************** scale with omega_TDA ************************     
+!******************* scale with omega_TDA ************************     
 !   divide by omega_TDA to yield  X_new                                
       do i=1,nroot                                                     
          ef=1.0d0/(dble(e(i))+1.0d-8)                                  
@@ -1097,7 +1097,7 @@ cccccccccccccccccccccccccccccccccccccc
             xnew(j,i)=ef*xnew(j,i)
          enddo
       enddo
-******************************************************************
+!*****************************************************************
 
       write(*,*)' writing trafoed spectral data to tda.dat ...'
       open(unit=28,file='tda.dat',status='replace')
