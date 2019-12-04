@@ -19,7 +19,7 @@ To make `stda` accessible export
 
 ```bash
 export STDAHOME=$PWD
-export PATH=$PATH:STDAHOME/exe
+export PATH=$PATH:STDAHOME
 ```
 
 For parallel usage set the threads for OMP and the MKL linear algebra backend by
