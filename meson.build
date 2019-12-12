@@ -1,4 +1,4 @@
-# This file is part of xtb4stda.
+# This file is part of stda.
 #
 # Copyright (C) 2019 Sebastian Ehlert
 #
@@ -73,35 +73,35 @@ if get_option('openmp')
 endif
 
 stda_srcs = [
-  'apbtrafo.f',
-  'block.f',
-  'header.f',
-  'intpack.f90',
-  'intslvm.f',
-  'io.f',
-  'linal.f',
-  'linear_response.f',
-  'main.f',
-  'molden.f',
-  'normalize.f',
-  'onetri.f',
-  'pckao.f',
-  'print_nto.f',
-  'printvec.f',
-  'prmat.f',
-  'readbasa.f',
-  'readbasmold.f',
-  'readl.f',
-  'readxtb.f',
-  'sfstda.f',
-  'sosor.f',
-  'srpapack.f',
-  'stdacommon.f90',
-  'stda.f',
-  'stda-rw.f',
-  'stringmod.f90',
-  'sutda.f',
-  'velo.f'
+    'apbtrafo.f',
+    'block.f',
+    'header.f',
+    'intpack.f90',
+    'intslvm.f',
+    'io.f',
+    'linal.f',
+    'linear_response.f',
+    'main.f',
+    'molden.f',
+    'normalize.f',
+    'onetri.f',
+    'pckao.f',
+    'print_nto.f',
+    'printvec.f',
+    'prmat.f',
+    'readbasa.f',
+    'readbasmold.f',
+    'readl.f',
+    'readxtb.f',
+    'sfstda.f',
+    'sosor.f',
+    'srpapack.f',
+    'stdacommon.f90',
+    'stda.f',
+    'stda-rw.f',
+    'stringmod.f90',
+    'sutda.f',
+    'velo.f'
 ]
 
 g_spec_srcs = [
