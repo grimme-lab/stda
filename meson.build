@@ -114,8 +114,8 @@ g2molden_srcs = [
 ]
 
 stda_exe = executable(meson.project_name(), stda_srcs,
-                          dependencies: dependencies,
-                          install: true)
+                      dependencies: dependencies,
+                      install: true)
 
 g2molden_exe = executable('g2molden', g2molden_srcs,
                           dependencies: dependencies,
@@ -123,7 +123,7 @@ g2molden_exe = executable('g2molden', g2molden_srcs,
 
 
 g_spec_exe = executable('g_spec', g_spec_srcs,
-                          dependencies: dependencies,
-                          install: true)
+                        dependencies: dependencies,
+                        install: true)
 
 

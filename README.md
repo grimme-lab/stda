@@ -22,6 +22,40 @@ export STDAHOME=$PWD
 export PATH=$PATH:$STDAHOME
 ```
 
+### Alternatives
+
+If you are not a fan of `make`, you can use [`meson`](https://mesonbuild.com/)
+as alternative, but it requires a fairly new version like 0.49 or newer for a
+decent Fortran support.
+For the default backend [`ninja`](https://ninja-build.org/) version 1.5 or newer
+has to be provided.
+
+To perform a build run:
+
+```bash
+export FC=ifort
+meson setup intel_build
+ninja -C intel_build
+```
+
+To install the `sdta` binaries to `/usr/local` use (might require `sudo`)
+
+```bash
+ninja -C build_intel install
+```
+
+For a local installation (or if you want to pack a release), modify the
+configuration by using
+
+```bash
+meson configure build_intel --prefix=/
+DESTDIR=$HOME/.local ninja -C build_intel install
+```
+
+The build system will generate binary files in `$DESTDIR/bin` (don't forget to add that to `PATH` if it is not the case).
+
+## Usage
+
 For parallel usage set the threads for OMP and the MKL linear algebra backend by
 
 ```bash
@@ -35,8 +69,6 @@ stack overflows *will* occur. Use something along the lines of this:
 ulimit -s unlimited
 export OMP_STACKSIZE=4G
 ```
-
-## Usage
 
 See the manual on the [release page](https://github.com/grimme-lab/stda/releases/latest).
 
