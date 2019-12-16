@@ -34,11 +34,11 @@ To perform a build run:
 
 ```bash
 export FC=ifort
-meson setup intel_build
-ninja -C intel_build
+meson setup build_intel
+ninja -C build_intel
 ```
 
-To install the `sdta` binaries to `/usr/local` use (might require `sudo`)
+To install the `stda` binaries to `/usr/local` use (might require `sudo`)
 
 ```bash
 ninja -C build_intel install

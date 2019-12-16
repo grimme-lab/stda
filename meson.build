@@ -18,7 +18,7 @@
 project('stda', 'fortran',
         version: '1.6.1',
         license: 'LGPL3',
-        meson_version: '>=0.51')
+        meson_version: '>=0.49')
 
 fc = meson.get_compiler('fortran')
 
@@ -41,10 +41,10 @@ if la_backend == 'mkl'
   libmkl += fc.find_library('m')
   libmkl += fc.find_library('dl')
   if fc.get_id() == 'intel'
-    libmkl += [fc.find_library('mkl_intel_lp64')]
+    libmkl += fc.find_library('mkl_intel_lp64')
     libmkl += fc.find_library('mkl_intel_thread')
   else
-    libmkl += [fc.find_library('mkl_gf_lp64')]
+    libmkl += fc.find_library('mkl_gf_lp64')
     libmkl += fc.find_library('mkl_gnu_thread')
   endif
   libmkl += fc.find_library('mkl_core')
