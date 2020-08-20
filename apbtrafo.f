@@ -32,7 +32,7 @@ ccccccccccccccccccccccccccccccccccc
       real*8 , intent( out ) :: rvpout(nroot)
 
       integer i,j,k,l,io,iv
-      integer*8 lin,ij
+      integer*8 lin8,ij
       real*8 de,ef,ak,xp,xlp,ylp,zlp,xvp,yvp,zvp,xmp,ymp,zmp
       real*8 xvp2,yvp2,zvp2,xmp2,ymp2,zmp2,efmod
       real*8 flp,fvp,rlp,rvp,p23,fact,unew,uold,hilf !,enew(nroot)
@@ -216,7 +216,7 @@ ccccccccccccccccccccccccccccccccccc
            iv=iconf(j,2)
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
-           ij=lin(io,iv)
+           ij=lin8(io,iv)
 ! A+B transformed stuff 
            xlp=xlp+xl(ij)*uold
            ylp=ylp+yl(ij)*uold
@@ -332,7 +332,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       real*8, intent( out ) :: rvpout(nroot)
 
       integer i,j,k,l,io,iv
-      integer*8 ij,lin
+      integer*8 ij,lin8
       real*8 de,ef,xp,xlp,ylp,zlp,xvp,yvp,zvp,xmp,ymp,zmp
       real*8 xvp2,yvp2,zvp2,xmp2,ymp2,zmp2,hilf,efmod
       real*8 flp,fvp,rlp,rvp,p23,fact,unew,uold !,enew(nroot)
@@ -468,7 +468,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
            iv=iconfa(j,2)
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
-           ij=lin(io,iv)
+           ij=lin8(io,iv)
 ! A+B transformed stuff 
            xlp=xlp+xla(ij)*uold
            ylp=ylp+yla(ij)*uold
@@ -493,7 +493,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
            iv=iconfb(j,2)
            unew=dble(xnew(k,i))
            uold=dble(x(k,i))
-           ij=lin(io,iv)
+           ij=lin8(io,iv)
 ! A+B transformed stuff 
            xlp=xlp+xlb(ij)*uold
            ylp=ylp+ylb(ij)*uold
@@ -587,7 +587,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
       real*4, allocatable :: qj(:),qk(:),bmat(:)
       integer i,j,io,iv,jo,jv,ierr,iiv,jjv,iwrk,jwrk
-      integer*8 ij,lin
+      integer*8 ij,lin8
       real*4 ek,ej,sdot,ak,ax,de,fact
       ij=nci
       ij=ij*(ij+1)/2
@@ -609,7 +609,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
            iwrk=(io-1)*nv + iiv
            qk(1:ncent)=pia(1:ncent,iwrk)
            do j=1,i-1
-              ij=lin(i,j)
+              ij=lin8(i,j)
               jo=iconf(j,1)
               jv=iconf(j,2)
               jjv=jv-no
@@ -622,7 +622,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
               ek=sdot(ncent,qj,1,qia(1,jwrk),1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
               bmat(ij)=bmat(ij)-fact*ax*ek ! scaled by ax
            enddo
-           ij=lin(i,i)
+           ij=lin8(i,i)
            ek=sdot(ncent,qk,1,qia(1,iwrk),1) 
            bmat(ij)=fact*(ak*ek-ax*ek) ! diagonal element of 0.5*B
       enddo
@@ -657,7 +657,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       real*8, intent(in)  :: dax
       real*4, allocatable :: qj(:),qk(:),bmat(:)
       integer i,j,io,iv,jo,jv,ierr,nex,iiv,jjv,iwrk,jwrk
-      integer*8 lin,ij
+      integer*8 lin8,ij
       real*4 ek,ej,sdot,ax,de,fact
       nex=nexa+nexb
       ij=nex
@@ -680,7 +680,7 @@ c alpha-alpha block
          iwrk=(io-1)*nva + iiv
          qk(1:ncent)=piaa(1:ncent,iwrk)
          do j=1,i-1
-            ij=lin(i,j)
+            ij=lin8(i,j)
             jo=iconfa(j,1)
             jv=iconfa(j,2)
             jjv=jv-noa
@@ -693,7 +693,7 @@ c alpha-alpha block
             ek=sdot(ncent,qj,1,qiaa(1,jwrk),1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
             bmat(ij)=bmat(ij)-fact*ax*ek 
          enddo
-         ij=lin(i,i)
+         ij=lin8(i,i)
          ek=sdot(ncent,qk,1,qiaa(1,iwrk),1)
          bmat(ij)=fact*(ek-ax*ek) ! diagonal element of 0.5*B
       enddo
@@ -711,7 +711,7 @@ c alpha-alpha block
          qk(1:ncent)=piab(1:ncent,iwrk)
 ! ...alpha block
          do j = 1,nexa
-            ij=lin(i,j)
+            ij=lin8(i,j)
             jo=iconfa(j,1)
             jv=iconfa(j,2)
             jjv=jv-noa
@@ -721,7 +721,7 @@ c alpha-alpha block
          enddo
 ! ...beta block
          do j = nexa+1,i-1
-            ij=lin(i,j)
+            ij=lin8(i,j)
             jo=iconfb(j-nexa,1)
             jv=iconfb(j-nexa,2)
             jjv=jv-nob
@@ -734,7 +734,7 @@ c alpha-alpha block
             ek=sdot(ncent,qj,1,qiab(1,jwrk),1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
             bmat(ij)=bmat(ij)-fact*ax*ek
          enddo
-         ij=lin(i,i)
+         ij=lin8(i,i)
          ek=sdot(ncent,qk,1,qiab(1,iwrk),1)
          bmat(ij)=fact*(ek-ax*ek) ! diagonal element of 0.5*B
       enddo

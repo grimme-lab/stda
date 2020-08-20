@@ -28,7 +28,7 @@
       integer ::io1,io2,iv1,iv2,iwrk,jwrk
       integer ::maxconf,moci,no,nv
       integer ::iconf(maxconf,2)
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -111,7 +111,7 @@
 !$omp do
       Do i=1, nci
         Do j=1, nci
-            jk=lin(i,j)
+            jk=lin8(i,j)
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
@@ -186,7 +186,7 @@
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -285,7 +285,7 @@
 !$omp do
       Do i=1, nci
         Do j=1, nci
-            jk=lin(i,j)
+            jk=lin8(i,j)
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
@@ -351,7 +351,7 @@ c frequency-dependent first hyperpolarizability (beta) SHG only
 !$omp do
       Do i=1,nci
         Do j=1,nci
-        ij=lin(i,j)
+        ij=lin8(i,j)
         Do ix=1,3
         XmY(i,ii,jj,ix)=XmY(i,ii,jj,ix)+ dble(omega)
      .               *dble(inv_amb(ij))*XpY(j,ii,jj,ix)
@@ -1379,7 +1379,7 @@ c B6 iz iy ix
       real*8 ::X(nci,num_freq+1,2,3)
       real*8 ::Y(nci,num_freq+1,2,3)
       integer ::i,j,k,ij,ii,kk,io1,io2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -1424,7 +1424,7 @@ c B6 iz iy ix
       real*8 ::X(nci,num_freq+1,2,3)
       real*8 ::Y(nci,num_freq+1,2,3)
       integer ::i,j,k,ab,ii,kk,iv1,iv2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -1669,7 +1669,7 @@ c     Body of the function
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B      
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -1754,7 +1754,7 @@ c     Body of the function
 !$omp do
       Do i=1, nci
         Do j=1, nci
-            jk=lin(i,j)
+            jk=lin8(i,j)
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
@@ -1819,7 +1819,7 @@ c     Body of the function
 !$omp do
       Do i=1,nci
         Do j=1,nci
-        ij=lin(i,j)
+        ij=lin8(i,j)
         Do ix=1,3
         XmY(i,ix)=XmY(i,ix)+ dble(omega)
      .               *dble(inv_amb(ij))*XpY(j,ix)
@@ -2351,7 +2351,7 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,j,k,ij,ii,kk,io1,io2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -2397,7 +2397,7 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,j,k,ij,ii,kk,io1,io2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -2443,7 +2443,7 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,j,k,ab,ii,kk,iv1,iv2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -2489,7 +2489,7 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,j,k,ab,ii,kk,iv1,iv2,idum1,idum2
-      integer*8 ::lin
+      integer*8 ::lin8
       integer ::jwrk
       logical ::check
       
@@ -2531,7 +2531,7 @@ c B4 n iy ix
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -2644,7 +2644,7 @@ c B4 n iy ix
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B      
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xmolw
       
@@ -2812,7 +2812,7 @@ c B4 n iy ix
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B      
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -2974,7 +2974,7 @@ c B4 n iy ix
       integer ::ix,iy,iz,iroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -3088,7 +3088,7 @@ c B4 n iy ix
       integer ::ix,iy,iz,iroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
@@ -3168,7 +3168,7 @@ c B4 n iy ix
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B      
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xmolw
       
@@ -3337,7 +3337,7 @@ c B4 n iy ix
       integer ::counter_Ab
       integer, allocatable :: B_listb(:,:)
       integer ::counter_Bb  
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xmolw,ak
       
@@ -3609,7 +3609,7 @@ c B4 n iy ix
       integer ::counter_Ab
       integer, allocatable :: B_listb(:,:)
       integer ::counter_Bb  
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xmolw,ak
       
@@ -3859,7 +3859,7 @@ c B4 n iy ix
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
       integer ::counter_B      
-      integer*8 ::lin
+      integer*8 ::lin8
       
       real*8 ::xmolw
       

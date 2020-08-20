@@ -1936,6 +1936,15 @@ c definition they use is 1/2d^2 E/dN^2 (in Eh)
       lin=idum2+idum1*(idum1-1)/2
       return
       end
+      
+      integer*8 function lin8(i1,i2)
+      integer i1,i2
+      integer*8 idum1,idum2
+      idum1=max(i1,i2)
+      idum2=min(i1,i2)
+      lin8=idum2+idum1*(idum1-1)/2
+      return
+      end
 
       subroutine cofc(nat,xyz,coc)
 !      calculates center of nuclear charge
