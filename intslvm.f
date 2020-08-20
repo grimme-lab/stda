@@ -32,7 +32,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       real*8, allocatable ::r7(:)
       real*8, allocatable ::r8(:)
       real*8, allocatable ::r9(:)
-      integer*8 memneed,mp,nrecordlen,k,i1,lin
+      integer*8 memneed,mp,nrecordlen,k,i1,lin8
       common/ prptyp / mprp 
       common /cema   / cen(3),xmolw
       common /amass  / ams(107)
@@ -169,7 +169,7 @@ C             V
       ij=0
       do i=1,nao
          do j=1,i-1
-            ij=lin(i,j)
+            ij=lin8(i,j)
             r0(ij)=r0(ij)*0.50d0 
             r1(ij)=r1(ij)*0.50d0
             r2(ij)=r2(ij)*0.50d0

@@ -1879,7 +1879,7 @@ c if sum > threshold include it
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
       real*4, allocatable :: q1(:),q2(:),q3(:),bmat(:)
       integer i,j,io,iv,jo,jv,ierr,iiv,jjv,iwrk,jwrk,l,k,moci
-      integer*8 ij,lin
+      integer*8 ij,lin8
       real*4 ek,ej,sdot,ak,ax,de,fact,integral
       ij=nci
       ij=ij*(ij+1)/2
@@ -1898,7 +1898,7 @@ c if sum > threshold include it
       open(unit=740,file='pia',form='unformatted',status='old')
       Do i=1, no
       Do j=1, i
-      ij=lin(i,j)
+      ij=lin8(i,j)
       read(710)pij(1:ncent,ij)
       enddo    
       enddo
@@ -1907,10 +1907,10 @@ c if sum > threshold include it
       k=i-no
       Do j=no+1, i-1
       l=j-no
-      ij=lin(k,l)
+      ij=lin8(k,l)
       read(73)qab(1:ncent,ij)
       enddo
-      ij=lin(k,k)
+      ij=lin8(k,k)
       read(72)qab(1:ncent,ij)    
       enddo
       close(72)
@@ -1941,7 +1941,7 @@ c if sum > threshold include it
            iwrk=(io-1)*nv + iiv
            q1(1:ncent)=pia(1:ncent,iwrk)
            do j=1,i-1
-              ij=lin(i,j)
+              ij=lin8(i,j)
               jo=iconf(j,1)
               jv=iconf(j,2)
               jjv=jv-no
@@ -1956,7 +1956,7 @@ c if sum > threshold include it
               ek=sdot(ncent,q2,1,q3,1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
               bmat(ij)=bmat(ij)-fact*ax*ek ! scaled by ax
            enddo
-           ij=lin(i,i)
+           ij=lin8(i,i)
            q2(1:ncent)=qia(1:ncent,iwrk)
            ek=sdot(ncent,q1,1,q2,1)
            bmat(ij)=fact*(ak*ek-ax*ek) ! diagonal element of 0.5*B
