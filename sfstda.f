@@ -19,10 +19,10 @@
 ! written by Marc de Wegifosse 2018-2019
 
       SUBROUTINE sfstda(ncent,nmo,nao,xyz,c,eps,occ,csp,iaoat,thr,thrp,
-     .            ax,alphak,betaj,fthr,nvec)   
+     .            ax,alphak,betaj,fthr,nvec)
       use commonlogicals
       use omp_lib
-      IMPLICIT NONE              
+      IMPLICIT NONE
 c input:
       integer ncent,nmo,nao
       integer iaoat(*)
@@ -34,8 +34,8 @@ c input:
 c local variables:
 
       integer :: STATUS
-      
-c l=dipole lengths, v=dipole velocity (d/dxyz), m=angular momentum      
+
+c l=dipole lengths, v=dipole velocity (d/dxyz), m=angular momentum
       real*8, allocatable ::xla(:),yla(:),zla(:)
 !       real*8, allocatable ::xva(:),yva(:),zva(:)
 !       real*8, allocatable ::xma(:),yma(:),zma(:)
@@ -43,15 +43,15 @@ c l=dipole lengths, v=dipole velocity (d/dxyz), m=angular momentum
 !       real*8, allocatable ::xvb(:),yvb(:),zvb(:)
 !       real*8, allocatable ::xmb(:),ymb(:),zmb(:)
       real*8, allocatable ::help(:),scr(:),dum(:),x(:,:)
-c MOs, orbital energies and CSF printout stuff      
+c MOs, orbital energies and CSF printout stuff
       real*8, allocatable ::cca(:),epsia(:)
       real*8, allocatable ::ccb(:),epsib(:)
       real*8, allocatable ::umerk(:,:)
       real*8, allocatable ::umrkx(:,:),umrky(:,:),umrkz(:,:)
       real*8, allocatable ::rvp(:)
 
-c stuff for diag of TDA matrix      
-c critical regarding memory     
+c stuff for diag of TDA matrix
+c critical regarding memory
       integer info,lwork,liwork,il,iu,nfound
       real*4, allocatable ::uci  (:,:)
       real*4, allocatable ::eci  (:)
@@ -62,7 +62,7 @@ c critical regarding memory
       integer,allocatable::isuppz(:)
 
 c Löwdin MOs, repulsion terms, charges and half-transformed stuff
-c critical regarding memory     
+c critical regarding memory
       real*8, allocatable ::clowa(:)
       real*8, allocatable ::clowb(:)
       real*4, allocatable ::gamj(:,:)
@@ -76,7 +76,7 @@ c critical regarding memory
       real*4 sdot
 
 c the maximum size of the TDA expansion space
-!      integer maxconf1,maxconf2                                 
+!      integer maxconf1,maxconf2
 !      parameter (maxconf1=500000)
 !c the maximum size of the TDA pt2 space
 !      parameter (maxconf2=maxconf1*10)
@@ -95,7 +95,7 @@ c RPA stuff
       real*4, allocatable ::apb(:)
       real*4, allocatable ::ambsqr(:)
 
-c intermediates       
+c intermediates
       real*8 omax,vmin,pert,de,ek,ej,ak,xc,rabx,ef
       real*8 pp,hilf,uu,sss,rl,rv,rm,time,coc(3)
       real*8 fl,fv,ec,p23,xp,umax,xvu,yvu,zvu,xmu,ymu,zmu,xlu,ylu,zlu
@@ -117,16 +117,23 @@ c intermediates
 ! variables for vector printout
       integer, allocatable :: vecchka(:),vecchkb(:)
       integer nvec,jhomo,jhomoa,jhomob
-c atomic Hubbard parameters      
+c atomic Hubbard parameters
       real*8 eta(94)
-c atomic masses      
+c atomic masses
       common /amass/ ams(107)
       real*8 ams
       character*79 dummy
+c For the computation of <S**2>
+      real*8, allocatable :: i_alpha_j_beta(:,:)
+      real*8, allocatable :: i_alpha_a_beta(:,:)
+      real*8 :: sum_ij,S2_UHF
+      real*8, allocatable :: Xia(:),Xiaib(:),Xiaka(:)
+      real*8, allocatable :: S2(:)
+      integer kk
 
-c just a printout      
+c just a printout
       call header('s T D A',0)
-      call cpu_time(start_time)      
+      call cpu_time(start_time)
       thr =thr /27.211385050d0
 c estimate the orbital energy window which corresponds to the desired
 c spectra range thr
@@ -140,15 +147,15 @@ c make it safe
          if(occ(i).gt.0.99.and.eps(i).gt.omax) omax=eps(i)
          if(occ(i).lt.0.01.and.eps(i).lt.vmin) vmin=eps(i)
       enddo
-      
-      
+
+
 ! optional: if eigenvectors are wanted in TM format, check now how many occupied there are in general
 ! this is needed to get the CSF sorting of TM
       jhomo=0
       jhomoa=0
       jhomob=0
       do i=1,nmo
-        if(occ(i).gt.0.990d0) then 
+        if(occ(i).gt.0.990d0) then
           jhomo=jhomo+1
           if(csp(i).eq.1)  jhomoa = jhomoa + 1
           if(csp(i).eq.2)  jhomob = jhomob + 1
@@ -191,7 +198,7 @@ c make it safe
      .         ccb(nao*mocib),epsib(mocib)
      .        )
 
-      write(*,*) 'Active space MOs in TDA : ',moci,mocia,mocib        
+      write(*,*) 'Active space MOs in TDA : ',moci,mocia,mocib
 
       mocia=0
       mocib=0
@@ -216,13 +223,13 @@ c make it safe
             endif
            endif
         enddo
- 
+
         no = moci
         noa = mocia
         nob = mocib
-  
+
         do i = 1,nmo
-           if(occ(i).lt.0.01.and.eps(i).lt.vthr)then          
+           if(occ(i).lt.0.01.and.eps(i).lt.vthr)then
               moci=moci+1
               if(csp(i).eq.1) then
               mocia = mocia + 1
@@ -245,14 +252,14 @@ c make it safe
       nva = mocia - noa
       nvb = mocib - nob
 
-      write(*,*) 'Occupied active MOs in TDA: ', no,noa,nob     
+      write(*,*) 'Occupied active MOs in TDA: ', no,noa,nob
       if(noa<=nob)then
       write(*,*)'warning number of alpha < beta'
       write(*,*)'only with alpha > beta'
       call exit(status)
       endif
-      write(*,*) 'Virtual active MOs in TDA: ', nv,nva,nvb             
-      if((noa.eq.0.or.nva.eq.0).and.(nob.eq.0.or.nvb.eq.0)) then 
+      write(*,*) 'Virtual active MOs in TDA: ', nv,nva,nvb
+      if((noa.eq.0.or.nva.eq.0).and.(nob.eq.0.or.nvb.eq.0)) then
         stop 'no CSF, increase energy threshold (-e option)'
       endif
 
@@ -268,7 +275,7 @@ c make it safe
       kconfb=0
 
 
-c we arrange MOS according to energy from 1:HOMO to LUMO:MOCI      
+c we arrange MOS according to energy from 1:HOMO to LUMO:MOCI
 c (in TM they come in irreps)
       write(*,*) 'Sorting MOs ...'
 c sort for E diag
@@ -310,14 +317,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       call onetri(1,help,dum,scr,ccb,nao,mocib)
       call shrink(mocib,dum,zlb)
       close(33,status='delete')
-! 
-! 
+!
+!
 ! CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! c
 ! c            magnetic dipole
 ! c
 ! CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! 
+!
       open(unit=34,file='xmint',form='unformatted',status='old')
 !       read(34) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
@@ -325,7 +332,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       call onetri(-1,help,dum,scr,ccb,nao,mocib)
 !       call shrink(mocib,dum,xmb)
       close(34,status='delete')
-! 
+!
       open(unit=35,file='ymint',form='unformatted',status='old')
 !       read(35) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
@@ -333,7 +340,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       call onetri(-1,help,dum,scr,ccb,nao,mocib)
 !       call shrink(mocib,dum,ymb)
       close(35,status='delete')
-! 
+!
       open(unit=36,file='zmint',form='unformatted',status='old')
 !       read(36) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
@@ -341,13 +348,13 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       call onetri(-1,help,dum,scr,ccb,nao,mocib)
 !       call shrink(mocib,dum,zmb)
       close(36,status='delete')
-! 
+!
 ! CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! c
 ! c            velocity dipole
 ! c
 ! CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  
+!
       open(unit=37,file='xvint',form='unformatted',status='old')
 !       read(37) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
@@ -355,15 +362,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       call onetri(-1,help,dum,scr,ccb,nao,mocib)
 !       call shrink(mocib,dum,xvb)
       close(37,status='delete')
-! 
+!
       open(unit=38,file='yvint',form='unformatted',status='old')
 !       read(38) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
 !       call shrink(mocia,dum,yva)
 !       call onetri(-1,help,dum,scr,ccb,nao,mocib)
 !       call shrink(mocib,dum,yvb)
-      close(38,status='delete')     
-! 
+      close(38,status='delete')
+!
       open(unit=39,file='zvint',form='unformatted',status='old')
 !       read(39) help
 !       call onetri(-1,help,dum,scr,cca,nao,mocia)
@@ -373,18 +380,18 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       close(39,status='delete')
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-c            calc S^1/2 and q(GS)          
+c            calc S^1/2 and q(GS)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       open(unit=40,file='sint',form='unformatted',status='old')
       read(40) help
       write(*,*) 'ints done.'
       close(40,status='delete')
- 
+
       write(*,*) 'S^1/2 ...'
 
       call makel(nao,help,x)
- 
+
       call dgemm('n','n',nao,mocia,nao,1.d0,x,nao,cca,nao,0.d0,scr,nao)
 
       do i=1,mocia
@@ -414,7 +421,33 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       enddo
 
       write(*,*) 'S^1/2 orthogonalized MO coefficients done.'
-
+      if(sf_s2)then
+      ! for the computation of <S**2>
+      allocate(i_alpha_j_beta(noa,nob))
+      i_alpha_j_beta=0.0
+      sum_ij=0.0
+      do i=1,noa
+        do j=1,nob
+          do k=1,nao
+          i_alpha_j_beta(i,j)=i_alpha_j_beta(i,j)+
+     .         clowa(k+(i-1)*nao)*clowb(k+(j-1)*nao)
+          enddo
+          sum_ij=sum_ij+i_alpha_j_beta(i,j)**2.0
+        enddo
+      enddo
+      S2_UHF=(noa-nob)/2.0*((noa-nob)/2.0+1.0)+nob-sum_ij
+      write(*,*) 'Unrestricted ground state <S**2>=',S2_UHF
+      allocate(i_alpha_a_beta(noa,nvb))
+      i_alpha_a_beta=0.0
+      do i=1,noa
+        do j=1,nvb
+          do k=1,nao
+          i_alpha_a_beta(i,j)=i_alpha_a_beta(i,j)+
+     .         clowa(k+(i-1)*nao)*clowb(k+(j+nob-1)*nao)
+          enddo
+        enddo
+      enddo
+      endif
       deallocate(scr,dum,help,x)
 
 
@@ -440,7 +473,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       write(*,'(10F7.3)') q1b(1:ncent)
 !       write(*,'(10F7.3)') (q1a(1:ncent)+q1b(1:ncent))
 !       write(*,*)
-!       write(*,'('' # of alpha and beta electrons in TDA:'',2F8.3)') 
+!       write(*,'('' # of alpha and beta electrons in TDA:'',2F8.3)')
 !      .sum(q1a(1:ncent)),sum(q1b(1:ncent))
 !       write(*,*)
 
@@ -454,15 +487,15 @@ c  UCIS scaling factor for K(ia|jb):
       ak = 1.0d0
 
 c the global parameters of the method:
-      beta1 = 0.3             
-      beta2 = 1.0              
- 
+      beta1 = 0.3
+      beta2 = 1.0
+
 
       if(betaj.lt.-99.0d0) then ! if no beta parameter was read in
       betaj=beta1+beta2*ax
       endif
 
- 
+
       write(*,*)
       write(*,*) 'ax(DF)  : ',ax
       write(*,*) 's^K      : ',ak
@@ -478,9 +511,9 @@ c compute gamma(j)
       xmolw=0
       do i = 1,ncent
          ii = idint(xyz(4,i))
-c ams is the atomic mass (mol weight for output file)        
+c ams is the atomic mass (mol weight for output file)
          xmolw = xmolw+ams(ii)
-         do j=1,i      
+         do j=1,i
             jj = idint(xyz(4,j))
             xj  = 0.50d0*(eta(ii)+eta(jj)) * (ax+ax*0.4) !!!!!!!!!!!!!!!!!!!!!!   SF this seems resonable
             rabx = dsqrt((xyz(1,i)-xyz(1,j))**2
@@ -546,8 +579,8 @@ c the primary ones
                iconfb(k,2)=iv
                edb(k)=de
             endif
-c for PT           
-            if(de.gt.thr.and.de.lt.fthr)then ! needs to be on if fthr is specified 
+c for PT
+            if(de.gt.thr.and.de.lt.fthr)then ! needs to be on if fthr is specified
                j=j+1
                kconfb(j,1)=io
                kconfb(j,2)=iv
@@ -558,7 +591,7 @@ c for PT
       enddo
       nexb=k
       nexptb=j
-      deallocate(uci) 
+      deallocate(uci)
       nex = nexb
       nexpt = nexptb
 
@@ -569,12 +602,12 @@ c for PT
 
 c errors and warning
       if(nex.lt.1) stop 'No CSF, increase energy threshold (-e option)'
-!      if(nexa.eq.maxconf1.or.nexb.eq.maxconf1) 
+!      if(nexa.eq.maxconf1.or.nexb.eq.maxconf1)
 !     .   stop 'Primary CSF space exceeded. use -e option!'
-!      if(nexpta.eq.maxconf2.or.nexptb.eq.maxconf2) 
+!      if(nexpta.eq.maxconf2.or.nexptb.eq.maxconf2)
 !     .   write(*,*)'CSF PT2 space exceeded. try -p option!'
-  
-c sort for E diag in each spin manifold 
+
+c sort for E diag in each spin manifold
 
       do 142 ii = 2,nexb
          i = ii - 1
@@ -593,10 +626,10 @@ c sort for E diag in each spin manifold
           iconfb(i,m)=iconfb(k,m)
           iconfb(k,m)=ihilf
          enddo
-  142 continue         
+  142 continue
 
-c just printout  
-      write(*,*) ' '       
+c just printout
+      write(*,*) ' '
       write(*,*)'Ordered frontier alpha orbitals:'
       write(*,*)'        eV'
       j=max(1,noa-10)
@@ -609,7 +642,7 @@ c just printout
          write(*,'(i4,F10.3,F8.1)') i,epsia(i)*27.21139
       enddo
 
-      write(*,*) ' ' 
+      write(*,*) ' '
       write(*,*)'Ordered frontier beta orbitals:'
       write(*,*)'        eV'
       j=max(1,nob-10)
@@ -662,7 +695,7 @@ c just printout
          enddo
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       allocate(pija(ncent,ihilf), stat=ierr)
         if(ierr.ne.0)stop 'allocation failed for (ij| intermediate'
         pija=0.0
@@ -704,7 +737,7 @@ c CSF which have been selected by the  diagonal element A(ia,ia)
      .                  maxconfb,iconfb,kconfb,
      .                  ak,ax,edb,edptb,
      .                  pija,qabb,thrp,newb)
- 
+
       deallocate(edptb,kconfb)
 
       new = newb
@@ -712,7 +745,7 @@ c CSF which have been selected by the  diagonal element A(ia,ia)
 
 c nroot at this point is the number of primary CSF. The
 c number of roots in the range 0-thr (as desired) is not
-c known but will be determined by the diag routine. 
+c known but will be determined by the diag routine.
        nroot = nex
       write(*,*) 'CSF included by PT:',new
       nexb = nexb + newb
@@ -733,7 +766,7 @@ c allocate the TDA matrix
 
 ********************************************************************************
 c set the TDA matrix up                                                        *
-      write(*,*)'calculating TDA matrix ...'              
+      write(*,*)'calculating TDA matrix ...'
 ********************************************************************************
       call sfstdamat(nci,nexb,ncent,noa,nob,nvb,
      .             maxconfb,iconfb,ax,edb,
@@ -750,41 +783,82 @@ c Diagonalize hci (A-matrix)
       write(*,'('' estimated time (min) '',f8.2)')
      .            float(nci)**2*float(nroot)/8.d+8/60.
 
-c if LAPACK does not work      
+c if LAPACK does not work
 c     allocate(eci(nci),uci(nci,nroot),
 c    .         stat=ierr)
 c     call sHQRII(hci,nci,nroot,eci,uci)
 
 c faster by a factor of 2-3
-      lwork =26*nci 
+      lwork =26*nci
       liwork=10*nci
-c we allocate uci with nci (and not with nroot) as safe 
+c we allocate uci with nci (and not with nroot) as safe
 c choice (other values gave segfaults)
       nroot=min(nci,int(1.5*nroot))
       allocate(eci(nci),uci(nci,nci),work(lwork),
      .         iwork(liwork),isuppz(nci),stat=ierr)
       if(ierr.ne.0)stop 'allocation failed for TDA matrix diag'
 
-      vl=-10.0 
+      vl=-10.0
       vu=thr
       call ssyevr('V','V','U',nci,hci,nci,vl,vu,il,iu,1.e-6,
      .            nfound,eci,uci,nci,isuppz,
      .            work,lwork,iwork,liwork,info)
       nroot=nfound
       if(nfound.lt.1) stop 'internal error in diag'
-
+      if(sf_s2)then
+      ! Compute <S**2> for each SF states
+      allocate(Xia(nroot),Xiaib(nroot),Xiaka(nroot),S2(nroot))
+      Xia=0.0
+      Xiaib=0.0
+      Xiaka=0.0
+      Do i=1,nroot
+        !X_iAaB <iA aB>
+        Do j=1,nci
+        Xia(i)=Xia(i)+dble(uci(j,i))*
+     .         i_alpha_a_beta(iconfb(j,1),iconfb(j,2)-nob)
+        enddo
+        Xia(i)=Xia(i)**2.0
+        !XjAaB XjAbB <iA aB><iA bB>
+        Do j=1,nci
+          Do kk=1,nci
+            if(iconfb(kk,1)==iconfb(j,1))then
+            Do k=1,noa
+          Xiaib(i)=Xiaib(i)+dble(uci(j,i))*dble(uci(kk,i))*
+     .             i_alpha_a_beta(k,iconfb(j,2)-nob)*
+     .             i_alpha_a_beta(k,iconfb(kk,2)-nob)
+            enddo
+            endif
+          enddo
+        enddo
+        !XiAaB XkAbB <iA jB><jA kB>
+        Do j=1,nci
+          Do kk=1,nci
+            if(iconfb(kk,2)==iconfb(j,2))then
+            Do k=1,nob
+          Xiaka(i)=Xiaka(i)+dble(uci(j,i))*dble(uci(kk,i))*
+     .             i_alpha_j_beta(iconfb(j,1),k)*
+     .             i_alpha_j_beta(iconfb(kk,1),k)
+            enddo
+            endif
+          enddo
+        enddo
+        S2(i)=nob+1-sum_ij-Xiaib(i)+Xiaka(i)+Xia(i)+
+     .            0.25*(noa-nob-2)*(noa-nob)
+      enddo
+      deallocate(Xia,Xiaib,Xiaka,i_alpha_j_beta,i_alpha_a_beta)
+      endif
 
       write(*,'(i5,'' SF-roots found, lowest/highest eigenvalue : '',
      .2F8.3,i4)') nroot,eci(1)*27.21139,eci(nroot)*27.21139,info
       if(info.gt.0) stop 'diag error (ssyevr)'
-      
+
       allocate(umerk(14,nroot))
-      
+
       ! largest configurations
-      
+
       Do i=1,nroot
-         umax=-1   
-         kmem=1 
+         umax=-1
+         kmem=1
       ! first largest
       do j=1,nci
             io=iconfb(j,1)
@@ -837,32 +911,42 @@ c choice (other values gave segfaults)
       umerk(8,i)=jmax
       umerk(9,i)=dble(uci(jmem,i))
       enddo
-      
- 20   format(i5,2f9.5,3(' ',i4,'(a) ->',i4,'(b) ',F6.2))      
-      
+
+ 20   format(i5,2f9.5,3(' ',i4,'(a) ->',i4,'(b) ',F6.2),f9.5)
+ 21   format(i5,2f9.5,3(' ',i4,'(a) ->',i4,'(b) ',F6.2))
+
       write(*,*)'SF states:'
+      if(sf_s2)then
       Do i=1, nroot
       write(*,20)i,eci(i),eci(i)*27.21139,
      .int(umerk(1:2,i)),umerk(3,i),
      .int(umerk(4:5,i)),umerk(6,i),
+     .int(umerk(7:8,i)),umerk(9,i),S2(i)
+      enddo
+      else
+      Do i=1, nroot
+      write(*,21)i,eci(i),eci(i)*27.21139,
+     .int(umerk(1:2,i)),umerk(3,i),
+     .int(umerk(4:5,i)),umerk(6,i),
      .int(umerk(7:8,i)),umerk(9,i)
       enddo
-      
+      endif
+
       call sf_lresp_ESA(nci,iconfb,maxconfb,xla,yla,zla,mocia,
      .                                      xlb,ylb,zlb,mocib,
-     .                noa,nva,nob,nvb,eci,uci,nroot,xmolw,thr)      
-      
-      
+     .                noa,nva,nob,nvb,eci,uci,nroot,xmolw,thr)
+
+
       if(nto)then
 
-      
+
       call SFprint_nto(uci,cca,mocia,nci,nroot,nao,
      .                   noa,nva,ccb,mocib,iconfb,
      .                   maxconfb,nob,nvb)
 
-      endif 
-      
-      
+      endif
+
+
       deallocate(hci)
 
 
@@ -873,18 +957,18 @@ c choice (other values gave segfaults)
  13   format(                   41x,f8.3,13x,f8.3)
  14   format(3x,F6.2,'(',i4,'a','->',i4,'a',')')
  15   format(3x,F6.2,'(',i4,'b','->',i4,'b',')')
- 16   format(i5,f6.2,f8.1,       5x,i4,' ->',i4,5x,'gap,J:',2f8.3, 
-     .       3x,'Kshft:',f8.3,2x,'locality:',f6.3) 
+ 16   format(i5,f6.2,f8.1,       5x,i4,' ->',i4,5x,'gap,J:',2f8.3,
+     .       3x,'Kshft:',f8.3,2x,'locality:',f6.3)
       call cpu_time(end_time)
       print '("sTD-DFT Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       write(*,*) 'SF-sTDA done.'
-      call EXIT(STATUS) 
+      call EXIT(STATUS)
 
       return
       end SUBROUTINE sfstda
-      
-      
+
+
 
       subroutine sfstdamat(nci,nexb,ncent,noa,nob,nvb,
      .                    mxcnfb,iconfb,dax,edb,
@@ -934,7 +1018,7 @@ c beta blocks
 
       end subroutine sfstdamat
 
-      
+
       subroutine sf_ptselect_uks(nexb,ncent,noa,nva,nob,nvb,
      .                  nexptb,mxcnfb,iconfb,
      .                  kconfb,dak,dax,edb,edptb,
@@ -958,7 +1042,7 @@ c beta blocks
       real*8 de,pert,amat
       logical, allocatable :: incl_conf(:)
 
-      allocate(ptb(nexb),pt2b(nexb), 
+      allocate(ptb(nexb),pt2b(nexb),
      .         qj(ncent),incl_conf(nexptb),stat=ierr)
       if(ierr.ne.0)stop 'allocation for PT intermediates crashed'
       incl_conf=.false.
@@ -969,8 +1053,8 @@ c beta blocks
       pt2b = 0.0d0
 
 !$omp parallel private(i,k,io,iv,iiv,iwrk,de,j,jo,jv,jjv,jwrk,ej,
-!$omp&                l,qj,ptb,amat,pert) reduction (+:pt2b) 
-!$omp do 
+!$omp&                l,qj,ptb,amat,pert) reduction (+:pt2b)
+!$omp do
 c outer loop over beta S-CSF
       do k=1,nexptb
          io=kconfb(k,1)
@@ -978,7 +1062,7 @@ c outer loop over beta S-CSF
          iiv=iv-nob
          iwrk=(io-1)*nvb + iiv
          de=edptb(k)
-c loop over beta P-CSF         
+c loop over beta P-CSF
          do j=1,nexb
             jo=iconfb(j,1)
             jv=iconfb(j,2)
@@ -997,7 +1081,7 @@ c if sum > threshold include the beta S-CSF in the beta P-CSF
          if(pert.gt.thrp)then
             incl_conf(k)=.true.
          else
-c else accumulate in the E(PT2) contribution to the alpha and beta P-CSF 
+c else accumulate in the E(PT2) contribution to the alpha and beta P-CSF
             do l=1,nexb
                pt2b(l)=pt2b(l) + ptb(l)
             enddo

@@ -15,9 +15,9 @@
 ! You should have received a copy of the GNU Lesser General Public License
 ! along with stda.  If not, see <https://www.gnu.org/licenses/>.
 !
-! wavefunction and basis common block                               
+! wavefunction and basis common block
       module stdacommon
-      
+
       real*8, allocatable :: co(:,:),exip(:),occ(:),eps(:)
       real*8, allocatable :: cxip(:),eta(:,:)
       integer, allocatable :: ipat(:),ipty(:),ipao(:),iaoat(:)
@@ -25,7 +25,7 @@
 
       end module stdacommon
 
-! xtb common block                               
+! xtb common block
       module kshiftcommon
 
       real*8 shftmax,shftwidth,shftsteep,shftmax_somo
@@ -39,9 +39,10 @@
       module commonlogicals
       logical triplet,rpachk,eigvec,screen,dokshift,printexciton,velcorr
       logical aniso
-      logical resp,TPA,aresp,ESA,smp2,bfw,spinflip,rw,pt_off,nto
+      logical resp,TPA,aresp,ESA,smp2,bfw,spinflip,rw,pt_off,nto,sf_s2
+      logical optrota,velo_OR
       end module commonlogicals
-      
+
 ! some variables for the response functions
       module commonresp
       integer :: num_freq

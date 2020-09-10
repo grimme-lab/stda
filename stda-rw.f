@@ -20,15 +20,15 @@
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C ncent: number of atoms
-C nmo  : number of MOs   
+C nmo  : number of MOs
 C nao  : number of contracted AOs
 C xyz  : array with atomic coordinates (1:3) and nuclear charge (4) in
 C        Bohr
 C c    : MO coefficients (nao*nmo)
-C eps  : MO energies (au)             
-C occ  : occupation numbers           
+C eps  : MO energies (au)
+C occ  : occupation numbers
 C iaoat: index array (1:nao) indicating on which atom the AO is centered
-C thr  : energy threshold in eV up to which energy the excited states   
+C thr  : energy threshold in eV up to which energy the excited states
 C        are computed = spectral range (input in eV)
 C thrp : threshold for perturbation selection of CSF (input)
 C ax   : Fock exchange mixing parameter in DF used
@@ -43,7 +43,7 @@ C nvec : integer, # roots for which eigenvectors are wanted
 !!! used logicals from commonlogicals !!!
 C triplet: logical=.true. if triplet states are to be calculated
 C rpachk : logical=.true. if sTD-DFT is performed
-C eigvec : logical=.true. print eigenvectors, ggavec is needed if eigvec and GGAs are used together 
+C eigvec : logical=.true. print eigenvectors, ggavec is needed if eigvec and GGAs are used together
 C nvec : integer, # roots for which eigenvectors are wanted
 C screen : prescreen in pt selection and for CSFs with small transition strengths
 C dokshift : shift A(ia,ia) elements if K(ia,ia) is small
@@ -53,33 +53,33 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       SUBROUTINE stda_rw(ncent,nmo,nao,xyz,c,eps,occ,iaoat,thr,thrp,
-     .            ax,alphak,betaj,fthr,nvec)   
+     .            ax,alphak,betaj,fthr,nvec)
       use commonlogicals
       use commonresp
       use omp_lib
-      IMPLICIT NONE              
+      IMPLICIT NONE
 c input:
       integer ncent,nmo,nao
       integer iaoat(*)
-      real*8  thr,thrp,ax,othr,vthr 
+      real*8  thr,thrp,ax,othr,vthr
       real*8  c(*),eps(*),occ(*),xyz(4,*)
       logical ggavec,ex
 c local varibles:
 
-c l=dipole lengths, v=dipole velocity (d/dxyz), m=angular momentum 
+c l=dipole lengths, v=dipole velocity (d/dxyz), m=angular momentum
       real*8 ::dipole(3),dipole_mo(3)
       integer::iwrk,jwrk
       real*8, allocatable ::xl(:),yl(:),zl(:)
       real*8, allocatable ::xv(:),yv(:),zv(:)
       real*8, allocatable ::xm(:),ym(:),zm(:)
       real*8, allocatable ::help(:),scr(:),dum(:),x(:,:)
-c MOs, orbital energies and CSF printout stuff      
+c MOs, orbital energies and CSF printout stuff
       real*8, allocatable ::ca(:),epsi(:)
       real*8, allocatable ::umerk(:,:),umrkx(:,:),umrky(:,:),umrkz(:,:)
       real*8, allocatable ::rvp(:)
 
 c stuff for diag of TDA matrix (or rpa)
-c critical regarding memory     
+c critical regarding memory
       integer info,lwork,liwork,il,iu,nfound
       real*4, allocatable ::uci  (:,:)
       real*4, allocatable ::eci  (:)
@@ -92,14 +92,14 @@ c RPA stuff
 c Linear response
       real*4 :: start_time, end_time, stda_time
       integer :: STATUS
-      
+
 ccccccccccccc
       real*4  vu,vl
       integer,allocatable ::iwork(:)
       integer,allocatable::isuppz(:)
 
 c Löwdin MOs, repulsion terms, charges and half-transformed stuff
-c critical regarding memory     
+c critical regarding memory
       real*8, allocatable ::clow(:)
       real*4, allocatable ::gamj(:,:)
       real*4, allocatable ::gamk(:,:)
@@ -109,16 +109,16 @@ c critical regarding memory
       real*4 sdot, integral
 
 !c the maximum size of the TDA expansion space
-      integer maxconf                                
+      integer maxconf
       real*8, allocatable ::ed(:),edpt(:)
       integer, allocatable :: iconf(:,:),kconf(:,:)
-      
+
 
 
 ! check for vector printout
       integer, allocatable ::  vecchk(:)
 
-c intermediates       
+c intermediates
       real*8 omax,vmin,pert,de,ek,ej,ak,xc,rabx,ef,fthr,aksqrt
       real*8 beta1,alpha2,pp,hilf,uu,sss,rl,rv,time,coc(3)
       real*8 fl,fv,ec,p23,xp,umax,xvu,yvu,zvu,xmu,ymu,zmu,xlu,ylu,zlu
@@ -128,17 +128,17 @@ c intermediates
       integer nci,jj,idum1,idum2,kmem,imax,jmax,lmem,ij,nroot,lin,ierr
       integer no,nv,n,nexpt,jhomo,nvec
       integer*8 imem1,imem2,imem3
-c atomic Hubbard parameters      
+c atomic Hubbard parameters
       real*8 eta(94)
-c atomic masses      
+c atomic masses
       common /amass/ ams(107)
       real*8 ams
       character*79 dummy
-      
+
       call cpu_time(stda_time)
-     
-c just a printout      
-      call header('s T D A',0)    
+
+c just a printout
+      call header('s T D A',0)
 
       thr =thr /27.211385050d0
 c estimate the orbital energy window which corresponds to the desired
@@ -150,14 +150,14 @@ c make it save
       moci=0
       omax=-1d+42
       vmin= 1d+42
-      
+
       do i=1,nmo
          if(occ(i).gt.1.990d0.and.eps(i).gt.omax) omax=eps(i)
          if(occ(i).lt.0.010d0.and.eps(i).lt.vmin)vmin=eps(i)
       enddo
 
 ! if eigenvectors are wanted in TM format,check now how many occupied there are in general
-      if(eigvec) then 
+      if(eigvec) then
         jhomo=0
         do i=1,nmo
           if(occ(i).gt.1.990d0) jhomo=jhomo+1
@@ -196,12 +196,12 @@ c make it save
      .         ca(nao*moci),epsi(moci)
      .        )
 
-      write(*,*)'MOs in TDA : ', moci                                  
+      write(*,*)'MOs in TDA : ', moci
 
 ! make two cases: 1st one) eigenvectors are needed, 2) eigenvectors are not needed
       if(eigvec.or.nto) then ! we want eigenvectors to be printed out
       allocate(vecchk(nmo), stat=ierr)
-      if(ierr.ne.0)stop 'allocation failed for vecchk' 
+      if(ierr.ne.0)stop 'allocation failed for vecchk'
         vecchk=0
         moci=0
         do i=1,nmo
@@ -216,7 +216,7 @@ c make it save
         enddo
         ihomo=moci
         do i=1,nmo
-           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then          
+           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
               moci=moci+1
               do j=1,nao
                  ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
@@ -238,7 +238,7 @@ c make it save
         enddo
         ihomo=moci
         do i=1,nmo
-           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then          
+           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
               moci=moci+1
               do j=1,nao
                  ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
@@ -250,10 +250,10 @@ c make it save
 
       no=ihomo
       nv=moci-no
-      write(*,*)'oMOs in TDA: ', no                                    
-      write(*,*)'vMOs in TDA: ', nv                                    
-      if(no.eq.0.or.nv.eq.0) then 
-        stop 'no CSF, increase energy threshold (-e option)' 
+      write(*,*)'oMOs in TDA: ', no
+      write(*,*)'vMOs in TDA: ', nv
+      if(no.eq.0.or.nv.eq.0) then
+        stop 'no CSF, increase energy threshold (-e option)'
       endif
 
       maxconf=no*nv
@@ -265,7 +265,7 @@ c make it save
       edpt=0.0d0
       iconf=0
       kconf=0
-c we arrange MOS according to energy from 1:HOMO to LUMO:MOCI      
+c we arrange MOS according to energy from 1:HOMO to LUMO:MOCI
 c (in TM they come in irreps)
       write(*,*)'sorting MOs ...'
 c sort for E diag
@@ -284,7 +284,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       open(unit=31,file='xlint',form='unformatted',status='old')
       read(31) help
-      
+
 !       dipole(1)=0.0
 !       do k=1,moci
 !       Do i=1,nao
@@ -295,23 +295,23 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       enddo
 !       enddo
 !       enddo
-!       write(*,*)'mu_x',dipole(1),'electronic, not 
+!       write(*,*)'mu_x',dipole(1),'electronic, not
 !      .shifted to the centre of mass'
-      
+
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,xl)
-      
+
       !dipole_mo(1)=0.0
       !Do i=1,moci
       !dipole_mo(1)=dipole_mo(1)-xl(lin(i,i))
       !enddo
       !write(*,*)dipole_mo(1)
-      
-      
+
+
       close(31,status='delete')
       open(unit=32,file='ylint',form='unformatted',status='old')
       read(32) help
-      
+
 !       dipole(2)=0.0
 !       do k=1,moci
 !       Do i=1,nao
@@ -323,20 +323,20 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       enddo
 !       enddo
 !       write(*,*)'mu_y',dipole(2)
-      
+
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,yl)
-      
+
       !dipole_mo(2)=0.0
       !Do i=1,moci
       !dipole_mo(2)=dipole_mo(2)-yl(lin(i,i))
       !enddo
       !write(*,*)dipole_mo(2)
-      
+
       close(32,status='delete')
       open(unit=33,file='zlint',form='unformatted',status='old')
       read(33) help
-      
+
 !       dipole(3)=0.0
 !       do k=1,moci
 !       Do i=1,nao
@@ -348,16 +348,16 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !       enddo
 !       enddo
 !       write(*,*)'mu_z',dipole(3)
-      
+
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zl)
-      
+
       !dipole_mo(3)=0.0
       !Do i=1,moci
       !dipole_mo(3)=dipole_mo(3)-zl(lin(i,i))
       !enddo
       !write(*,*)dipole_mo(3)
-      
+
       close(33,status='delete')
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -387,7 +387,7 @@ c
 c            velocity dipole
 c
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
- 
+
       open(unit=37,file='xvint',form='unformatted',status='old')
       read(37) help
       call onetri(-1,help,dum,scr,ca,nao,moci)
@@ -405,18 +405,18 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       close(39,status='delete')
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-c            calc S^1/2 and q(GS)          
+c            calc S^1/2 and q(GS)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-      open(unit=40,file='sint',form='unformatted',status='old')     
+      open(unit=40,file='sint',form='unformatted',status='old')
       read(40) help
       write(*,*) 'ints done.'
       close(40,status='delete')
 
- 
+
       write(*,*) 'S^1/2 ...'
       call makel(nao,help,x)
-      
+
       call dgemm('n','n',nao,moci,nao,1.d0,X,nao,CA,nao,0.d0,SCR,nao)
       write(*,*) 'S^1/2 orthogonalized MO coefficients done.'
 
@@ -437,7 +437,7 @@ c check and copy to real*4 array
 
 !      call cpu_time(time)
 
-c these are standard (CIS) factors for singlet      
+c these are standard (CIS) factors for singlet
       ak=2.0d0
       if(triplet) ak=0.0d0
 
@@ -446,10 +446,10 @@ c     read(1,*)beta1,beta2,alpha1,alpha2,fk
 c     close(1)
 
 c the global parameters of the method:
-      beta1=0.20d0            
-      beta2=1.830d0              
-      alpha1=1.420d0            
-      alpha2=0.480d0   
+      beta1=0.20d0
+      beta2=1.830d0
+      alpha1=1.420d0
+      alpha2=0.480d0
 
       if(betaj.lt.-99.0d0) then ! if no beta parameter was read in
       betaj=beta1+beta2*ax
@@ -474,12 +474,12 @@ c distances for gamma calc
       xmolw=0
       do i=1,ncent
          ii=idint(xyz(4,i))
-c ams is the atomic mass (-> mol weight for output file)        
+c ams is the atomic mass (-> mol weight for output file)
          xmolw=xmolw+ams(ii)
-         do j=1,i      
+         do j=1,i
             jj=idint(xyz(4,j))
-            xj  =0.50d0*(eta(ii)+eta(jj)) * ax 
-            xk  =0.50d0*(eta(ii)+eta(jj)) 
+            xj  =0.50d0*(eta(ii)+eta(jj)) * ax
+            xk  =0.50d0*(eta(ii)+eta(jj))
             rabx=sqrt((xyz(1,i)-xyz(1,j))**2
      .               +(xyz(2,i)-xyz(2,j))**2
      .               +(xyz(3,i)-xyz(3,j))**2)
@@ -489,16 +489,16 @@ c ams is the atomic mass (-> mol weight for output file)
             gamk(i,j)=gamk(j,i)
          enddo
       enddo
-      
+
       !
 ! write transition charges on disc
 !
       write(*,*)'write transition charges on disc'
        open(unit=70,file='qii',form='unformatted',status='replace')
-!       open(unit=71,file='qij',form='unformatted',status='replace') 
-      open(unit=710,file='pij',form='unformatted',status='replace')       
+!       open(unit=71,file='qij',form='unformatted',status='replace')
+      open(unit=710,file='pij',form='unformatted',status='replace')
       allocate(q1(ncent),q2(ncent),qij(ncent,no*(no+1)/2))
-      q1=0.0  
+      q1=0.0
       q2=0.0
       Do i=1, no
       Do j=1, i-1
@@ -507,7 +507,7 @@ c ams is the atomic mass (-> mol weight for output file)
       qij(1:ncent,lin(i,j))=q1(1:ncent)
       enddo
       call lo12pop(i,i,ncent,nao,iaoat,clow,q1)
-       write(70)q1 
+       write(70)q1
       qij(1:ncent,lin(i,i))=q1(1:ncent)
       q2(1:ncent)=q2(1:ncent)+q1(1:ncent)
       enddo
@@ -523,19 +523,19 @@ c ams is the atomic mass (-> mol weight for output file)
       deallocate(pij)
       close(710)
       open(unit=72,file='qaa',form='unformatted',status='replace')
-      open(unit=73,file='qab',form='unformatted',status='replace')    
+      open(unit=73,file='qab',form='unformatted',status='replace')
       Do i=no+1, moci
       Do j=no+1, i-1
       call lo12pop(i,j,ncent,nao,iaoat,clow,q1)
       write(73)q1
       enddo
       call lo12pop(i,i,ncent,nao,iaoat,clow,q1)
-      write(72)q1      
+      write(72)q1
       enddo
       close(72)
       close(73)
       open(unit=74,file='qia',form='unformatted',status='replace')
-      open(unit=740,file='pia',form='unformatted',status='replace') 
+      open(unit=740,file='pia',form='unformatted',status='replace')
       allocate(qia(ncent,no*nv))
       Do i=1, no
       Do j=no+1, moci
@@ -543,8 +543,8 @@ c ams is the atomic mass (-> mol weight for output file)
       write(74)q1
       ij=(i-1)*nv+j-no
       qia(1:ncent,ij)=q1(1:ncent)
-      enddo    
-      enddo   
+      enddo
+      enddo
       close(74)
       allocate(pia(ncent,no*nv))
       pia=0.0
@@ -555,7 +555,7 @@ c ams is the atomic mass (-> mol weight for output file)
       enddo
       close(740)
       deallocate(clow)
-      
+
       write(*,'(/'' SCF atom population (using active MOs):'')')
       write(*,'(10F7.3)')q2(1:ncent)*2.0
       write(*,*)
@@ -563,18 +563,18 @@ c ams is the atomic mass (-> mol weight for output file)
       write(*,*)
 
       open(unit=70,file='qii',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')  
+      open(unit=72,file='qaa',form='unformatted',status='old')
       allocate(qij(ncent,no),qab(ncent,nv))
-      
+
       Do i=1, no
-      read(70)qij(1:ncent,i)     
+      read(70)qij(1:ncent,i)
       enddo
       Do i=1, nv
-      read(72)qab(1:ncent,i)    
-      enddo  
+      read(72)qab(1:ncent,i)
+      enddo
       close(70)
-      close(72)  
-      
+      close(72)
+
       allocate(pij(ncent,no), stat=ierr)
       if(ierr.ne.0)stop 'allocation failed for (ii| intermediate'
       pij=0.0
@@ -587,9 +587,9 @@ c ams is the atomic mass (-> mol weight for output file)
       call sgemm('t','n',nv,no,ncent,1.0,qab,ncent,pij,ncent,0.0,
      .           uci,nv)
       deallocate(pij)
-      
+
       allocate(q3(1:ncent))
-c determine singles which are lower than thr      
+c determine singles which are lower than thr
       k=0
       j=0
       do io=1,no ! occ loop
@@ -597,17 +597,17 @@ c determine singles which are lower than thr
          do iv=no+1,moci ! virt loop
             de=epsi(iv)-epsi(io)
             q2(1:ncent)=qab(1:ncent,iv-no) !qaa
-            ej=dble(uci(iv-no,io))         
+            ej=dble(uci(iv-no,io))
             de=de-ej
             i=nv*(io-1)+iv-no
             q2(1:ncent)=pia(1:ncent,i)
-            q3(1:ncent)=qia(1:ncent,i) !qia            
+            q3(1:ncent)=qia(1:ncent,i) !qia
             ek=sdot(ncent,q2,1,q3,1)
             de=de+ak*ek
 
 ! optional: perform K(ia,ia) dependent shift
             if(dokshift) then
-              call kshift_to_ediag(de,ek) 
+              call kshift_to_ediag(de,ek)
             endif
 
 c the primary ones
@@ -617,7 +617,7 @@ c the primary ones
                iconf(k,2)=iv
                ed(k)=de
             endif
-c for PT            
+c for PT
             if(de.gt.thr.and.de.lt.fthr)then ! needs to be on if fthr is specified
                j=j+1
                kconf(j,1)=io
@@ -632,7 +632,7 @@ c for PT
       nci=nex
       nex=k
       nexpt=j
-   
+
       write(*,*)
       write(*,*)nex,'CSF included by energy.'
       write(*,*)
@@ -640,32 +640,32 @@ c for PT
 
 c errors and warning
       if(nex.lt.1) stop 'no CSF, increase energy threshold (-e option)'
-!      if(nex.eq.maxconf) 
+!      if(nex.eq.maxconf)
 !     .   stop 'primary CSF space exceeded. use -e option!'
-!      if(nexpt.eq.maxconf) 
+!      if(nexpt.eq.maxconf)
 !     .   write(*,*)'CSF PT2 space exceeded. try -p option!'
-  
-c sort for E diag
-      do 141 ii = 2,nex                                      
-         i = ii - 1                                         
-         k = i                                             
-         pp= ed(i) 
-         do 121 j = ii, nex                               
-            if (ed(j) .ge. pp) go to 121    
-            k = j                                        
-            pp=ed(j)
-  121    continue                            
-         if (k .eq. i) go to 141            
-         ed(k) = ed(i)   
-         ed(i) = pp       
-         do m=1,2 
-         ihilf=iconf(i,m)        
-         iconf(i,m)=iconf(k,m)         
-         iconf(k,m)=ihilf   
-         enddo
-  141 continue          
 
-c just printout         
+c sort for E diag
+      do 141 ii = 2,nex
+         i = ii - 1
+         k = i
+         pp= ed(i)
+         do 121 j = ii, nex
+            if (ed(j) .ge. pp) go to 121
+            k = j
+            pp=ed(j)
+  121    continue
+         if (k .eq. i) go to 141
+         ed(k) = ed(i)
+         ed(i) = pp
+         do m=1,2
+         ihilf=iconf(i,m)
+         iconf(i,m)=iconf(k,m)
+         iconf(k,m)=ihilf
+         enddo
+  141 continue
+
+c just printout
       write(*,*)'ordered frontier orbitals'
       write(*,*)'        eV'
       j=max(1,no-10)
@@ -679,26 +679,26 @@ c just printout
       enddo
 
       open(unit=70,file='qii',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')  
+      open(unit=72,file='qaa',form='unformatted',status='old')
       open(unit=74,file='qia',form='unformatted',status='old')
       allocate(qij(ncent,no),qab(ncent,nv),qia(ncent,no*nv))
-      
+
       Do i=1, no
-      read(70)qij(1:ncent,i)     
+      read(70)qij(1:ncent,i)
       enddo
       Do i=1, nv
-      read(72)qab(1:ncent,i)    
+      read(72)qab(1:ncent,i)
       enddo
       Do i=1, no
       Do j=no+1, moci
       ij=(i-1)*nv+j-no
       read(74)qia(1:ncent,ij)
-      enddo    
-      enddo   
+      enddo
+      enddo
       close(70,status='delete')
       close(72)
-      close(74)    
-      
+      close(74)
+
       write(*,*)
       write(*,*)'            lowest CSF states'
       write(*,*)'      eV     nm      excitation i->a               eV'
@@ -708,7 +708,7 @@ c just printout
          q1(1:ncent)=qij(1:ncent,io)
          jii=integral(q1,q1,gamj,ncent)
          k=iv-no
-         q2(1:ncent)=qab(1:ncent,k)         
+         q2(1:ncent)=qab(1:ncent,k)
          ej=integral(q1,q2,gamj,ncent)
          jaa=integral(q2,q2,gamj,ncent)
          l=nv*(io-1)+k
@@ -722,7 +722,7 @@ c just printout
      .   1.d+7/(ed(i)*2.19474625d+5),iconf(i,1:2),
      .   27.211*(epsi(iv)-epsi(io)),27.211*ej,27.211*ek,27.211*de,loc
       enddo
-      
+
       deallocate(q1,q2,q3,qij,qab,qia)
  14   format(i5,f6.2,f8.1,       5x,i4,' ->',i4,5x,'gap,J,K:',3f8.3,
      .       3x,'Kshft:',f8.3,2x,'locality:',f6.3,E12.5)
@@ -732,7 +732,7 @@ c just printout
       write(*,*)
       write(*,*)'selecting CSF ...'
       if(pt_off)then
-      deallocate(edpt,kconf) 
+      deallocate(edpt,kconf)
       nroot=nex
       nci=nex
       write(*,*)nci,'CSF in total.'
@@ -743,14 +743,14 @@ c just printout
 
 c nroot at this point is the number of primary CSF. The
 c number of roots in the range 0-thr (as desired) is not
-c known but will be determined by the diag routine. 
+c known but will be determined by the diag routine.
       nroot=nex
       write(*,*)new,'CSF included by PT.'
       nci=nex+new
       write(*,*)nci,'CSF in total.'
       endif
 !      call cpu_time(hilf)
-!      write(*,*) 'time elapsed:',hilf-time      
+!      write(*,*) 'time elapsed:',hilf-time
       if(rpachk) then
 **************************
 c Obtional RPA procedure *
@@ -758,87 +758,105 @@ c Obtional RPA procedure *
       write(*,*) 'sTD-DFT procedure...'
       write(*,*) 'setting up A+B and A-B matrices'
 
-c allocate A+B and A-B in packed form 
+c allocate A+B and A-B in packed form
       allocate( apb(nci*(nci+1)/2),ambsqr(nci*(nci+1)/2),
-     .          stat=ierr ) 
+     .          stat=ierr )
       if(ierr.ne.0)stop 'allocation failed for A+B or A-B'
 
       call rrpamat_rw(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed,gamj
      .             ,gamk,apb,ambsqr,moci)
-     
+
 *****************************
 c Linear Response functions *
-*****************************    
-      if(resp) then
-      if(triplet) stop 'not available'
+*****************************
+      if(optrota)then
       call cpu_time(start_time)
-      allocate( amb(nci*(nci+1)/2), stat=ierr ) 
-      if(ierr.ne.0)stop 'allocation failed for A-B'    
+      allocate( amb(nci*(nci+1)/2), stat=ierr )
+      if(ierr.ne.0)stop 'allocation failed for A-B'
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
       close(53,status='delete')
-      
+      if(velo_OR==.false.)call optrot(nci,apb,amb,iconf,maxconf,
+     .xl,yl,zl,moci,no,nv,xm,ym,zm,xmolw)
+      if(velo_OR==.true.)call optrot_velo(nci,apb,amb,iconf,maxconf,
+     .xv,yv,zv,moci,no,nv,xm,ym,zm,xmolw)
+      call cpu_time(end_time)
+      print '("Opt. Rot.   Time = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
+      print '("sTD-DFT Time = ",f12.2," minutes.")'
+     .      ,(end_time-stda_time)/60.0
+      CALL EXIT(STATUS)
+      endif
+      if(resp) then
+      if(triplet) stop 'not available'
+      call cpu_time(start_time)
+      allocate( amb(nci*(nci+1)/2), stat=ierr )
+      if(ierr.ne.0)stop 'allocation failed for A-B'
+      open(unit=53,file='amb',form='unformatted',status='old')
+      read(53) amb
+      close(53,status='delete')
+
       call lresp1(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv)
-      
+
       call cpu_time(end_time)
       print '("Lresp   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
-     
+
 !       call lresp1_noinv(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
 !      .                     no,nv)
-!       
+!
 !       call cpu_time(end_time)
 !       print '("Lresp   Time = ",f12.2," minutes.")'
 !      .      ,(end_time-start_time)/60.0
       print '("sTD-DFT-rw Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
-      CALL EXIT(STATUS) 
+      CALL EXIT(STATUS)
       endif
-      
+
       if(aresp) then
       if(triplet) stop 'not available'
       call cpu_time(start_time)
-      allocate( amb(nci*(nci+1)/2), stat=ierr ) 
-      if(ierr.ne.0)stop 'allocation failed for A-B'    
+      allocate( amb(nci*(nci+1)/2), stat=ierr )
+      if(ierr.ne.0)stop 'allocation failed for A-B'
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
       close(53,status='delete')
-      
+
       call lresp(nci,apb,ambsqr,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv)
-      
+
       call cpu_time(end_time)
       print '("Lresp   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
-      
+
 !       call lresp_noinv(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
 !      .                     no,nv)
 !       call lresp_noinv1(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
 !      .                     no,nv)
-!       
+!
 !       call cpu_time(end_time)
 !       print '("Lresp   Time = ",f12.2," minutes.")'
 !      .      ,(end_time-start_time)/60.0
       print '("sTD-DFT-rw Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
-      CALL EXIT(STATUS) 
+      CALL EXIT(STATUS)
       endif
 
-     
+
 
 c big arrays not needed anymore
       deallocate(ed)
 !      call prmat4(6,ambsqr,nci,0,'A-B^0.5')
 
-************************************************************************************     
+************************************************************************************
 ! if eigenvectors in TM format wanted for GGAs, this is done here (not so nice)
 ************************************************************************************
       ggavec=.false.
-      if (ax.eq.0.0d0.and.eigvec) then 
+      if (ax.eq.0.0d0.and.eigvec) then
         open(unit=39,file='TmPvEcInFo',status='replace')
         ! print to temporary file
-        if(triplet) then 
+        if(triplet) then
           write(39,*) 1
         else
          write(39,*) 0
@@ -868,48 +886,48 @@ c uci is now X, hci is Y
       if(info.lt.1) stop 'internal error in diag'
       nroot=info
       info=0
-      
-      
+
+
 !       if(resp)then
-!       
+!
 !       call pol_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
 !      .maxconf,iconf,ak)
-!       
-!       
+!
+!
 !       endif
-      
+
 *****************************
 c Lin. Response func. 2PA   *
-*****************************     
+*****************************
       if(TPA)then
       if(triplet) stop 'not available'
       call cpu_time(start_time)
-      allocate( amb(nci*(nci+1)/2), stat=ierr ) 
-      if(ierr.ne.0)stop 'allocation failed for A-B'    
+      allocate( amb(nci*(nci+1)/2), stat=ierr )
+      if(ierr.ne.0)stop 'allocation failed for A-B'
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
       close(53)
-      
+
       call lresp_2PA(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv,eci,uci,hci,nroot)
-      
+
       call cpu_time(end_time)
       print '("Lresp   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
-     
+
 !       call lresp_2PA_noinv(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
 !      .                     no,nv,eci,uci,hci,nroot)
-!      
+!
 !       call cpu_time(end_time)
 !       print '("Lresp   Time = ",f12.2," minutes.")'
 !      .      ,(end_time-start_time)/60.0
-     
+
       print '("sTD-DFT-rw Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       write(*,*)
-      !CALL EXIT([STATUS]) 
+      !CALL EXIT([STATUS])
       endif
-    
+
       deallocate(apb,ambsqr)
 !********************************************************************************
       open(unit=53,file='amb',form='unformatted',status='old')
@@ -946,27 +964,27 @@ c big arrays not needed anymore
       write(*,'('' estimated time (min) '',f8.2)')
      .            float(nci)**2*float(nroot)/8.d+8/60.
 
-c if LAPACK does not work      
+c if LAPACK does not work
 c     allocate(eci(nci),uci(nci,nroot),
 c    .         stat=ierr)
 c     call sHQRII(hci,nci,nroot,eci,uci)
 
 c faster by a factor of 2-3
-      lwork =26*nci 
+      lwork =26*nci
       liwork=10*nci
-c we allocate uci with nci (and not with nroot) as save 
+c we allocate uci with nci (and not with nroot) as save
 c choice (other values gave segfaults)
       nroot=min(nci,int(1.5*nroot))
       allocate(eci(nci),uci(nci,nci),work(lwork),
      .         iwork(liwork),isuppz(nci))
       if(ierr.ne.0)stop 'allocation failed for TDA matrix diag'
 
-      vl=0  
+      vl=0
       vu=thr
       call ssyevr('V','V','U',nci,hci,nci,vl,vu,il,iu,1.e-6,
      .            nfound,eci,uci,nci,isuppz,
      .            work,lwork,iwork,liwork,info)
-      
+
       nroot=nfound
       if(nfound.lt.1) stop 'internal error in diag'
 
@@ -985,7 +1003,7 @@ c     call prmat4(6,uci,nci,nci,'uci')
 !        enddo
 !!!!
 
-      endif 
+      endif
 
       write(*,'(i5,'' roots found, lowest/highest eigenvalue : '',
      .2F8.3,i4)')nroot,eci(1)*27.21139,eci(nroot)*27.21139,info
@@ -993,7 +1011,7 @@ c     call prmat4(6,uci,nci,nci,'uci')
 
       allocate(umerk(14,nroot))
 c contract WF with MO integrals for intensities
-      p23= 2.0d0/3.0d0 
+      p23= 2.0d0/3.0d0
       aksqrt=sqrt(ak)
 
 ! if aniso, store and print the x,y,z-resolved data
@@ -1003,11 +1021,11 @@ c contract WF with MO integrals for intensities
         umrkx=0.0d0
         umrky=0.0d0
         umrkz=0.0d0
-      endif      
+      endif
 
 ! if desired, print out data for exciton coupling, i.e., transition moments
       if(printexciton) then
-        open(unit=27,file='tda.exc')  
+        open(unit=27,file='tda.exc')
         write(27,*)ncent,nroot
         write(27,'(a)',advance='yes')'$coord'
         ihilf=0
@@ -1028,21 +1046,21 @@ c loop over excited states
       do i=1,nroot
          de=dble(eci(i))
          ef=1.0d0/(de+1.0d-8)
-         xlu=0.0d0   
-         ylu=0.0d0 
-         zlu=0.0d0 
-         xmu=0.0d0 
-         ymu=0.0d0 
-         zmu=0.0d0 
-         xvu=0.0d0 
-         yvu=0.0d0 
+         xlu=0.0d0
+         ylu=0.0d0
+         zlu=0.0d0
+         xmu=0.0d0
+         ymu=0.0d0
+         zmu=0.0d0
+         xvu=0.0d0
+         yvu=0.0d0
          zvu=0.0d0
          xms=0.0d0
          yms=0.0d0
-         zms=0.0d0 
+         zms=0.0d0
          l=0
-         umax=-1   
-         kmem=1 
+         umax=-1
+         kmem=1
          q1=0.0
 c loop over  CSF
          do j=1,nci
@@ -1073,7 +1091,7 @@ c loop over  CSF
             ymu=ymu+ym(ij)*pp
             zmu=zmu+zm(ij)*pp
             if(.not.velcorr.and.printexciton) then
-               l=(io-1)*nv+(iv-no)   
+               l=(io-1)*nv+(iv-no)
                q1(1:ncent)=q1(1:ncent)+qia(1:ncent,l)*real(uu)
             endif
          enddo
@@ -1089,8 +1107,8 @@ c loop over  CSF
          ymu=ymu*aksqrt
          zmu=zmu*aksqrt
 
-c polarizability         
-         alp_real(1)=alp_real(1)+xlu*xlu*ef   
+c polarizability
+         alp_real(1)=alp_real(1)+xlu*xlu*ef
          alp_real(2)=alp_real(2)+xlu*ylu*ef
          alp_real(3)=alp_real(3)+ylu*ylu*ef
          alp_real(4)=alp_real(4)+xlu*zlu*ef
@@ -1109,20 +1127,20 @@ c polarizability
            do k=1,ncent
              write(27,'(f12.8)') real(aksqrt)*q1(k) ! factor of 2**0.5 arises from spin integration
            enddo
-!           write(27,*) 
+!           write(27,*)
          endif
 
-         xp=xlu*xlu+ylu*ylu+zlu*zlu      
-         fl=de*p23*xp        
-         xp=xvu*xvu+yvu*yvu+zvu*zvu       
-         fv=ef*p23*xp               
+         xp=xlu*xlu+ylu*ylu+zlu*zlu
+         fl=de*p23*xp
+         xp=xvu*xvu+yvu*yvu+zvu*zvu
+         fv=ef*p23*xp
          xp=xlu*xmu+ylu*ymu+zlu*zmu
-         rl=-235.7220d0*xp 
-! multiplying with ak (2=singlet excitation -> restricted case) is already included in moments: see book by Harada & Nakanishi         
+         rl=-235.7220d0*xp
+! multiplying with ak (2=singlet excitation -> restricted case) is already included in moments: see book by Harada & Nakanishi
 ! recalculated value for Rot with recent CODATA values and changed it (used to be 235.730)
 ! the factor is the conversion from e*a0*mu_b in atomic units to 10^40 cgs (m_b is the Bohr magneton and a0 the Bohr radius)
-         xp=xvu*xmu+yvu*ymu+zvu*zmu       
-         rv=-235.7220d0*xp*ef 
+         xp=xvu*xmu+yvu*ymu+zvu*zmu
+         rv=-235.7220d0*xp*ef
          rvp(i)=rv
 c sum rule
          sumf=sumf+fl
@@ -1198,39 +1216,39 @@ c sum rule
          endif
       enddo
 
-       
+
 c sort (output)
 c     do 140 ii = 2,nroot
-c        i = ii - 1                                                
-c        k = i                                                    
-c        pp= umerk(1,i) 
-c        do 120 j = ii, nroot                                     
-c           if (umerk(1,j) .ge. pp) go to 120    
-c           k = j                                               
-c           pp=umerk(1,j) 
-c 120    continue                                              
-c        if (k .eq. i) go to 140                              
-c        umerk(1,k) = umerk(1,i)   
-c        umerk(1,i) = pp       
+c        i = ii - 1
+c        k = i
+c        pp= umerk(1,i)
+c        do 120 j = ii, nroot
+c           if (umerk(1,j) .ge. pp) go to 120
+c           k = j
+c           pp=umerk(1,j)
+c 120    continue
+c        if (k .eq. i) go to 140
+c        umerk(1,k) = umerk(1,i)
+c        umerk(1,i) = pp
 c        do m=2,11
-c           hilf=umerk(m,i)        
-c           umerk(m,i)=umerk(m,k)         
-c           umerk(m,k)=hilf   
+c           hilf=umerk(m,i)
+c           umerk(m,i)=umerk(m,k)
+c           umerk(m,k)=hilf
 c        enddo
-c 140 continue                                               
+c 140 continue
 
  11   format(i5,f9.3,f8.1,2f11.4,3x,3(F6.2,'(',i4,'->',i4,')'))
  12   format(i5,f6.2,f8.1,       5x,i4,' ->',i4,5x,'gap,J,K:',3f8.3,
      .       3x,'Kshft:',f8.3)
  13   format(                   41x,f8.3,13x,f8.3)
-     
+
       if(.not.rpachk) deallocate(hci)
 
 
       if(.not.velcorr) then
 
         write(*,*)'writing spectral data to tda.dat ...'
-        call print_tdadat(nroot,xmolw,eci,umerk(2:5,:),thr,'tda.dat') 
+        call print_tdadat(nroot,xmolw,eci,umerk(2:5,:),thr,'tda.dat')
 
         if(aniso) then
           write(*,*)'writing anisotropic data ...'
@@ -1242,40 +1260,40 @@ c 140 continue
           call print_tdadat(nroot,xmolw,eci,umrkz(1:4,:),thr,'tdaz.dat')
           deallocate(umrkx,umrky,umrkz)
           write(*,*)'data given such that f = (f_x + f_y + f_z)/3'
-          write(*,*)'                 and R = R_x + R_y + R_z' 
-        endif         
+          write(*,*)'                 and R = R_x + R_y + R_z'
+        endif
       else
-         ! if velocity correction is on, get improved rotatory strengths 
-         if (printexciton) then 
+         ! if velocity correction is on, get improved rotatory strengths
+         if (printexciton) then
            call apbtrafoexc(nci,nroot,uci,eci,xl,yl,zl,xv,yv,zv,xm,ym,zm
      .                  ,xmolw,no,nv,coc,ncent,qia,maxconf,iconf,ak,rvp)
          else
            call apbtrafo(nci,nroot,uci,eci,xl,yl,zl,xv,yv,zv,xm,ym,zm
-     .                   ,xmolw,maxconf,iconf,ak,rvp) 
+     .                   ,xmolw,maxconf,iconf,ak,rvp)
          endif
          do i=1,nroot
             umerk(5,i)=rvp(i)
-         enddo 
+         enddo
       endif
 
-      if(printexciton) then 
+      if(printexciton) then
         deallocate(qia)
         close(27)
       endif
- 
 
-c output         
+
+c output
       write(*,*)
       write(*,*)
      .'excitation energies, transition moments and TDA amplitudes'
-      if(velcorr) then 
+      if(velcorr) then
         write(*,*) 'state    eV      nm       fL        Rv(corr)'
       else
         write(*,*) 'state    eV      nm       fL         Rv'
       endif
       do i=1,nroot
          ec=umerk(1,i)
-         write(*,11)                         
+         write(*,11)
      .   i,ec*27.21139,
      .   1.d+7/(ec*2.19474625d+5),umerk(2,i),umerk(5,i)
      .   ,umerk(6,i),idint(umerk(7,i)),idint(umerk(8,i))
@@ -1291,10 +1309,10 @@ c output
 
       call sosor(nroot,xmolw,eci,rvp)
       deallocate(rvp,q1)
-      
+
 *****************************
 c Lin. Response func. ESA   *
-*****************************    
+*****************************
       if(ESA)then
       if(triplet) stop 'not available'
       ! Unrelaxed state-to-state transition dipole moments
@@ -1317,9 +1335,9 @@ c Lin. Response func. ESA   *
      .      ,(end_time-stda_time)/60.0
       endif
       write(*,*)
-      !CALL EXIT([STATUS]) 
+      !CALL EXIT([STATUS])
       endif
-      
+
 !       call hyperpol_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
 !      .maxconf,iconf,no,nv) !to test the moments
 !       call tpa_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
@@ -1351,13 +1369,13 @@ c Lin. Response func. ESA   *
           call printvectda(rpachk,nci,nroot,uci,eci) ! TDA vectors
         endif
       endif
-      
+
       if(nto)then
       if(rpachk)then
       call print_nto_rpa(uci,hci,ca,moci,nci,nroot,nao,iconf,
      .                   maxconf,no,nv)
       else
-      
+
       call print_nto(uci,ca,moci,nci,nroot,nao,iconf,maxconf,no,nv)
       endif
       endif
@@ -1366,44 +1384,44 @@ c Lin. Response func. ESA   *
 
       if(rpachk) then
       write(*,*) 'sTD-DFT-rw done.'
-      else       
+      else
       write(*,*) 'sTDA-rw done.'
       endif
 
 !!! old fitting part
-!c used for fitting      
+!c used for fitting
        inquire(file='.REF',exist=ex)
        if(.not.ex) return
        open(unit=27,file='.REF')
        open(unit=28,file='.OUT')
        read(27,*) i,k
- 
+
        if(k.eq.1)then
-c take only bright ones      
+c take only bright ones
       read(27,*) hilf
       do j=1,nroot
          if(umerk(2,j).gt.0.03)then
-         write(28,'(4f12.6)') 
+         write(28,'(4f12.6)')
      .   (umerk(1,j)*27.211-hilf),hilf,umerk(1,j)*27.211,umerk(2,j)
          exit
          endif
       enddo
       elseif(k.eq.2)then
-c take only very bright ones      
+c take only very bright ones
       read(27,*) hilf
       do j=1,nroot
          if(umerk(2,j).gt.0.2)then
-         write(28,'(4f12.6)') 
+         write(28,'(4f12.6)')
      .   (umerk(1,j)*27.211-hilf),hilf,umerk(1,j)*27.211,umerk(2,j)
          exit
          endif
       enddo
       elseif(k.eq.3)then
-c take only very bright CD ones      
+c take only very bright CD ones
       read(27,*) hilf
       do j=1,nroot
          if(abs(umerk(5,j)).gt.100)then
-         write(28,'(4f12.6)') 
+         write(28,'(4f12.6)')
      .   (umerk(1,j)*27.211-hilf),hilf,umerk(1,j)*27.211,umerk(5,j)
          exit
          endif
@@ -1412,7 +1430,7 @@ c take only very bright CD ones
       do j=1,i
          read(27,*) hilf
          if(hilf.gt.0.01)
-     .   write(28,'(4f12.6)') 
+     .   write(28,'(4f12.6)')
      .   (umerk(1,j)*27.211-hilf),hilf,umerk(1,j)*27.211,umerk(2,j)
       enddo
       endif
@@ -1439,7 +1457,7 @@ c take only very bright CD ones
       integer, intent(in) :: kconf(mxcnf,2),no,nv
       integer, intent (inout) :: iconf(mxcnf,2)
       integer, intent (out) :: new
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)     
+      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*8, intent(in)  :: dak,dax,thrp,edpt(mxcnf)
       real*8, intent(inout) :: ed(mxcnf)
       real*4, allocatable :: qia(:,:),pia(:,:)
@@ -1452,27 +1470,27 @@ c take only very bright CD ones
       logical, allocatable :: incl_conf(:)
       ak=real(dak)
       ax=real(dax)
-      allocate(q1(ncent),q2(ncent),q3(ncent),pt(nex),pt2(nex), 
+      allocate(q1(ncent),q2(ncent),q3(ncent),pt(nex),pt2(nex),
      .         incl_conf(nexpt),stat=ierr)
       if(ierr.ne.0)stop 'allocation for PT intermediates crashed'
       incl_conf=.false.
-      
-      
+
+
       allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
      .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-      
+
       open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old') 
-      open(unit=73,file='qab',form='unformatted',status='old')  
-      open(unit=74,file='qia',form='unformatted',status='old') 
+      open(unit=72,file='qaa',form='unformatted',status='old')
+      open(unit=73,file='qab',form='unformatted',status='old')
+      open(unit=74,file='qia',form='unformatted',status='old')
       open(unit=740,file='pia',form='unformatted',status='old')
       Do i=1, no
       Do j=1, i
       ij=lin(i,j)
       read(710)pij(1:ncent,ij)
-      enddo    
       enddo
-      close(710) 
+      enddo
+      close(710)
       Do i=no+1, moci
       k=i-no
       Do j=no+1, i-1
@@ -1481,7 +1499,7 @@ c take only very bright CD ones
       read(73)qab(1:ncent,ij)
       enddo
       ij=lin(k,k)
-      read(72)qab(1:ncent,ij)    
+      read(72)qab(1:ncent,ij)
       enddo
       close(72)
       close(73)
@@ -1490,11 +1508,11 @@ c take only very bright CD ones
       ij=(i-1)*nv+j-no
       read(74)qia(1:ncent,ij)
       read(740)pia(1:ncent,ij)
-      enddo    
-      enddo   
-      close(74)      
+      enddo
+      enddo
+      close(74)
       close(740)
-      
+
       new=0
       pt2=0.0d0
 
@@ -1502,7 +1520,7 @@ c take only very bright CD ones
 ! loop over secondary/neglected CSF, this is done omp-parallel
 !$omp parallel private(i,k,io,iv,iiv,iwrk,q1,de,j,jo,jv,jjv,jwrk,ek,ej,
 !$omp&                 q2,q3,pt,amat,pert) reduction (+:pt2)
-!$omp do 
+!$omp do
       do k=1,nexpt
          io=kconf(k,1)
          iv=kconf(k,2)
@@ -1510,7 +1528,7 @@ c take only very bright CD ones
          iwrk=(io-1)*nv + iiv
          q1(1:ncent)=pia(1:ncent,iwrk)
          de=edpt(k)
-c loop over primary CSF         
+c loop over primary CSF
          do j=1,nex
             jo=iconf(j,1)
             jv=iconf(j,2)
@@ -1523,16 +1541,16 @@ c coupling
             q3(1:ncent)=qab(1:ncent,lin(iiv,jjv))
             ej=sdot(ncent,q2,1,q3,1)
             pt(j)=0.0d0
-            amat=ak*ek-ej 
+            amat=ak*ek-ej
             pt(j)=amat**2/(de-ed(j)+1.d-10)
          enddo
          pert=sum(pt(1:nex))
-c if sum > threshold include it 
+c if sum > threshold include it
          if(pert.gt.thrp)then
             incl_conf(k)=.true.
          else
             do i=1,nex
-               pt2(i)=pt2(i)+pt(i)                
+               pt2(i)=pt2(i)+pt(i)
             enddo
          endif
       enddo
@@ -1542,19 +1560,19 @@ c if sum > threshold include it
       do i=1,nexpt
          if(.not.incl_conf(i)) cycle
             io=kconf(i,1)
-            iv=kconf(i,2)       
-            de=edpt(i)     
+            iv=kconf(i,2)
+            de=edpt(i)
             new=new+1
-            iconf(nex+new,1)=io      
-            iconf(nex+new,2)=iv      
+            iconf(nex+new,1)=io
+            iconf(nex+new,2)=iv
             ed   (nex+new  )=de
       enddo
       pert=0.0d0
       do i=1,nex
-         pert=pert+pt2(i) 
-         ed(i)=ed(i)-pt2(i) 
+         pert=pert+pt2(i)
+         ed(i)=ed(i)-pt2(i)
       enddo
-      
+
       write(*,'('' average/max PT2 energy lowering (eV):'',2F10.3)')
      .             27.21139*pert/float(nex),maxval(pt2)*27.21139
 
@@ -1575,7 +1593,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent) 
+      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1592,19 +1610,19 @@ c if sum > threshold include it
       ambsqr=0.0e0
       allocate(qab(ncent,nv*(nv+1)/2),
      .         pij(ncent,no*(no+1)/2))
-      
+
       open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old') 
-      open(unit=73,file='qab',form='unformatted',status='old')  
-      open(unit=74,file='qia',form='unformatted',status='old') 
+      open(unit=72,file='qaa',form='unformatted',status='old')
+      open(unit=73,file='qab',form='unformatted',status='old')
+      open(unit=74,file='qia',form='unformatted',status='old')
       open(unit=740,file='pia',form='unformatted',status='old')
       Do i=1, no
       Do j=1, i
       ij=lin(i,j)
       read(710)pij(1:ncent,ij)
-      enddo    
       enddo
-      close(710,status='delete') 
+      enddo
+      close(710,status='delete')
       Do i=no+1, moci
       k=i-no
       Do j=no+1, i-1
@@ -1613,7 +1631,7 @@ c if sum > threshold include it
       read(73)qab(1:ncent,ij)
       enddo
       ij=lin(k,k)
-      read(72)qab(1:ncent,ij)    
+      read(72)qab(1:ncent,ij)
       enddo
       close(72,status='delete')
       close(73,status='delete')
@@ -1638,22 +1656,22 @@ c if sum > threshold include it
            enddo ! j
         enddo ! i
 !$omp end do
-!$omp end parallel      
+!$omp end parallel
       endif
       deallocate(pij,qab)
       allocate(qia(ncent,mxcnf),
-     .         pia(ncent,mxcnf))      
+     .         pia(ncent,mxcnf))
       Do i=1, no
       Do j=no+1, moci
       ij=(i-1)*nv+j-no
       read(74)qia(1:ncent,ij)
       read(740)pia(1:ncent,ij)
-      enddo    
-      enddo   
-      close(74,status='delete')      
+      enddo
+      enddo
+      close(74,status='delete')
       close(740,status='delete')
-      
-      
+
+
 ! if ax=0, A-B is diagonal and its off-diagonal elements do not need to be calculated
       if(abs(dax).lt.1.0d-6) then
         ij=0
@@ -1676,7 +1694,7 @@ c if sum > threshold include it
               ek=sdot(ncent,q1,1,q2,1)! ek = (ia|jb)
               apb(ij)=2.0*ak*ek
               ambsqr(ij)=0.0
-           enddo ! j 
+           enddo ! j
            de=real(ed(i))
            ij=lin(i,i)
            q2(1:ncent)=qia(1:ncent,iwrk)
@@ -1685,8 +1703,8 @@ c if sum > threshold include it
            apb(ij)=de+ak*ek       ! diagonal element of A+B
         enddo ! i
 !$omp end do
-!$omp end parallel        
-      else      
+!$omp end parallel
+      else
         ij=0
         ! for now ambsqr=A+B and apb=A-B, since we need to take the sqrt of A-B (but want to save memory)
 !$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,
@@ -1729,28 +1747,28 @@ c if sum > threshold include it
 
 !        call prmat4(6,apb,nci,0,'A-B')
 !        call prmat4(6,ambsqr,nci,0,'A+B')
-      if(aresp.or.resp) then
+      if(aresp.or.resp.or.optrota) then
         write(*,*) ' calculating (A-B)^0.5 not necessary...'
-        open(unit=53,file='amb',form='unformatted',status='replace') 
+        open(unit=53,file='amb',form='unformatted',status='replace')
         write(53) apb
         close(53)
         apb=ambsqr
       else
-        open(unit=52,file='apbmat',form='unformatted',status='replace') 
+        open(unit=52,file='apbmat',form='unformatted',status='replace')
         write(52) ambsqr
-        open(unit=53,file='amb',form='unformatted',status='replace') 
+        open(unit=53,file='amb',form='unformatted',status='replace')
         write(53) apb
         write(*,*) ' calculating (A-B)^0.5 ...'
         write(*,'('' estimated time (min) '',f8.2)')
      .            float(nci)**2*float(nci)/4.d+8/60.
-        call smatpow(nci,apb) ! calculate sqrt(a-b), termed ambsqr 
+        call smatpow(nci,apb) ! calculate sqrt(a-b), termed ambsqr
 
         ambsqr=apb
 
         rewind(52)
         read(52) apb
         close(52,status='delete')
-        close(53)      
+        close(53)
       endif
 
 
@@ -1768,7 +1786,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)  
+      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1780,22 +1798,22 @@ c if sum > threshold include it
       if(ierr.ne.0)stop 'allocation for qkj crashed'
       ak=real(dak)
       ax=real(dax)
-      
+
       allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
      .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-      
+
       open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old') 
-      open(unit=73,file='qab',form='unformatted',status='old')  
-      open(unit=74,file='qia',form='unformatted',status='old') 
+      open(unit=72,file='qaa',form='unformatted',status='old')
+      open(unit=73,file='qab',form='unformatted',status='old')
+      open(unit=74,file='qia',form='unformatted',status='old')
       open(unit=740,file='pia',form='unformatted',status='old')
       Do i=1, no
       Do j=1, i
       ij=lin(i,j)
       read(710)pij(1:ncent,ij)
-      enddo    
       enddo
-      close(710,status='delete') 
+      enddo
+      close(710,status='delete')
       Do i=no+1, moci
       k=i-no
       Do j=no+1, i-1
@@ -1804,7 +1822,7 @@ c if sum > threshold include it
       read(73)qab(1:ncent,ij)
       enddo
       ij=lin(k,k)
-      read(72)qab(1:ncent,ij)    
+      read(72)qab(1:ncent,ij)
       enddo
       close(72,status='delete')
       close(73,status='delete')
@@ -1813,11 +1831,11 @@ c if sum > threshold include it
       ij=(i-1)*nv+j-no
       read(74)qia(1:ncent,ij)
       read(740)pia(1:ncent,ij)
-      enddo    
-      enddo   
-      close(74,status='delete')      
+      enddo
+      enddo
+      close(74,status='delete')
       close(740,status='delete')
-      
+
 ! calculate CIS matrix A
       hci=0.0e0
 !$omp parallel private(i,j,io,iv,jo,jv,iiv,iwrk,jjv,jwrk,q1,
@@ -1842,16 +1860,16 @@ c if sum > threshold include it
             hci(j,i)=ak*ek-ej
             hci(i,j)=hci(j,i)
          enddo
-         hci(i,i)=real(ed(i))                         
+         hci(i,i)=real(ed(i))
       enddo
 !$omp end do
 !$omp end parallel
-      deallocate(qia,qab,pij,pia) 
+      deallocate(qia,qab,pij,pia)
       deallocate(q1,q2,q3)
       return
       end subroutine rtdamat_rw
-***********************************************************************     
-      
+***********************************************************************
+
       real*4 function integral(q_ij,q_ab,gamma,ncent)
       use omp_lib
       implicit none
@@ -1864,7 +1882,7 @@ c if sum > threshold include it
       integral = sdot(ncent,q_ij,1,intermediate,1)
       return
       end
-      
+
 ***********************************************************************
 * set up 0.5*B  (packed form) in RKS case
 ***********************************************************************
@@ -1873,7 +1891,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent) 
+      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1887,22 +1905,22 @@ c if sum > threshold include it
       if(ierr.ne.0)stop 'allocation for qkj/bmat crashed'
       ak=real(dak)
       ax=real(dax)
-      
+
       allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
      .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-      
+
       open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old') 
-      open(unit=73,file='qab',form='unformatted',status='old')  
-      open(unit=74,file='qia',form='unformatted',status='old') 
+      open(unit=72,file='qaa',form='unformatted',status='old')
+      open(unit=73,file='qab',form='unformatted',status='old')
+      open(unit=74,file='qia',form='unformatted',status='old')
       open(unit=740,file='pia',form='unformatted',status='old')
       Do i=1, no
       Do j=1, i
       ij=lin8(i,j)
       read(710)pij(1:ncent,ij)
-      enddo    
       enddo
-      close(710) 
+      enddo
+      close(710)
       Do i=no+1, moci
       k=i-no
       Do j=no+1, i-1
@@ -1911,7 +1929,7 @@ c if sum > threshold include it
       read(73)qab(1:ncent,ij)
       enddo
       ij=lin8(k,k)
-      read(72)qab(1:ncent,ij)    
+      read(72)qab(1:ncent,ij)
       enddo
       close(72)
       close(73)
@@ -1920,15 +1938,15 @@ c if sum > threshold include it
       ij=(i-1)*nv+j-no
       read(74)qia(1:ncent,ij)
       read(740)pia(1:ncent,ij)
-      enddo    
-      enddo   
-      close(74)      
+      enddo
+      enddo
+      close(74)
       close(740)
-     
-      
-! calculate 0.5*B 
+
+
+! calculate 0.5*B
       bmat=0.0e0
-      fact=0.50d0 ! this is the scaling of the B-contribution 
+      fact=0.50d0 ! this is the scaling of the B-contribution
       open(unit=52,file='bmat',form='unformatted',status='replace')
       ij=0
 !$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,
@@ -1962,10 +1980,10 @@ c if sum > threshold include it
            bmat(ij)=fact*(ak*ek-ax*ek) ! diagonal element of 0.5*B
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       write(52)bmat
       close(52)
-      deallocate(qia,qab,pij,pia) 
+      deallocate(qia,qab,pij,pia)
       deallocate(bmat,q1,q2,q3)
       return
 

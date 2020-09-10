@@ -19,24 +19,24 @@
 ! written by Marc de Wegifosse 2017-2019
 
 
-      SUBROUTINE lresp(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv)  
+      SUBROUTINE lresp(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk
       integer ::maxconf,moci,no,nv
       integer ::iconf(maxconf,2)
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
-      
-      
+
+
       real*4 ::apb(nci*(nci+1)/2)
       real*4 ::amb(nci*(nci+1)/2)
       real*4, allocatable ::inv_amb(:)
@@ -51,16 +51,16 @@
       integer ::info
       integer, allocatable ::ipiv(:)
       real*4, allocatable ::work (:)
-      
+
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-     
+
       open(unit=101,file='wavelength',form='formatted',status='old')
       freq(1)=0.0
       write(*,*)
@@ -79,15 +79,15 @@
       freq(i+1)=45.56335/freq(i+1)
       enddo
       close(101)
-      
+
       allocate(inv_amb(nci*(nci+1)/2))
       inv_amb=amb
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_amb,ipiv,info)
-      call ssptri(uplo,nci,inv_amb,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_amb,ipiv,work,info)
       deallocate(ipiv,work)
-      
+
       allocate( XpY(nci,3))
 
       Do ii=1, num_freq+1
@@ -96,16 +96,16 @@
       call cpu_time(start_time)
       allocate(inv_resp(nci*(nci+1)/2))
       inv_resp=apb-omega**2.0*inv_amb
-      
+
 
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
       deallocate(ipiv,work)
-      
-      
-      
+
+
+
 !$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
 !$omp&                 reduction (+:XpY)
 !$omp do
@@ -139,9 +139,9 @@
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
-            idum2=min(io,iv) 
+            idum2=min(io,iv)
             ij=idum2+idum1*(idum1-1)/2
-      alpha_xx=alpha_xx-(xl(ij)*XpY(j,1))*2.0 
+      alpha_xx=alpha_xx-(xl(ij)*XpY(j,1))*2.0
       alpha_xy=alpha_xy-(xl(ij)*XpY(j,2))*2.0
       alpha_xz=alpha_xz-(xl(ij)*XpY(j,3))*2.0
       alpha_yy=alpha_yy-(yl(ij)*XpY(j,2))*2.0
@@ -165,19 +165,19 @@
       enddo
       deallocate(XpY)
       deallocate(inv_amb)
-111   format(A15,F20.6)      
+111   format(A15,F20.6)
 1111  format(A22,2A20)
-2222  format(A2,3F20.6)    
+2222  format(A2,3F20.6)
 3333  format(A16,F7.1,A1,F7.1,A1)
       end subroutine lresp
-      
-      
-      
-      SUBROUTINE lresp1(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv)  
+
+
+
+      SUBROUTINE lresp1(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk
       integer ::maxconf,moci,no,nv
@@ -187,14 +187,14 @@
       integer, allocatable :: B_list(:,:)
       integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
-      
-      
+
+
       real*4 ::apb(nci*(nci+1)/2)
       real*4 ::amb(nci*(nci+1)/2)
       real*4, allocatable ::inv_amb(:)
@@ -212,14 +212,14 @@
       integer ::info
       integer, allocatable ::ipiv(:)
       real*4, allocatable ::work (:)
-      
+
       integer ::ix,iy,iz
       real*8 ::beta(3,3,3),A,B
       real*8 ::beta2_ZZZ, beta2_XZZ, beta_HRS, DR
       real*8 ::betaVEC_X, betaVEC_Y, betaVEC_Z
-      
+
       real*4 ::start_time,end_time
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
@@ -245,15 +245,15 @@
       freq(i+1)=45.56335/freq(i+1)
       enddo
       close(101)
-      
+
       allocate(inv_amb(nci*(nci+1)/2))
       inv_amb=amb
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_amb,ipiv,info)
-      call ssptri(uplo,nci,inv_amb,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_amb,ipiv,work,info)
       deallocate(ipiv,work)
-      
+
       allocate( XpY(nci,num_freq+1,2,3))
       allocate( XmY(nci,num_freq+1,2,3))
       allocate( X(nci,num_freq+1,2,3),
@@ -266,20 +266,20 @@
       Do ii=1, num_freq+1
       Do jj=1, 2 !2*omega
       omega=freq(ii)*jj
-      if(jj==2) omega=-omega ! from GAMESS implementation, this is what seems to be! 
+      if(jj==2) omega=-omega ! from GAMESS implementation, this is what seems to be!
       call cpu_time(start_time)
       allocate(inv_resp(nci*(nci+1)/2))
       inv_resp=apb-omega**2.0*inv_amb
-      
+
 
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
       deallocate(ipiv,work)
-      
-      
-      
+
+
+
 !$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
 !$omp&                 reduction (+:XpY)
 !$omp do
@@ -314,9 +314,9 @@
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
-            idum2=min(io,iv) 
+            idum2=min(io,iv)
             ij=idum2+idum1*(idum1-1)/2
-      alpha_xx=alpha_xx-(xl(ij)*XpY(j,ii,jj,1))*2.0 
+      alpha_xx=alpha_xx-(xl(ij)*XpY(j,ii,jj,1))*2.0
       alpha_xy=alpha_xy-(xl(ij)*XpY(j,ii,jj,2))*2.0
       alpha_xz=alpha_xz-(xl(ij)*XpY(j,ii,jj,3))*2.0
       alpha_yy=alpha_yy-(yl(ij)*XpY(j,ii,jj,2))*2.0
@@ -337,11 +337,11 @@
       write(*,111) 'Mean of alpha',(alpha_xx+alpha_yy+alpha_zz)/3.0
       write(*,*)
       endif
-      
-      
-      
+
+
+
 c frequency-dependent first hyperpolarizability (beta) SHG only
-      
+
       ! extract X and Y from XpY
       ! (X-Y)=omega*(A-B)^-1 (X+Y)
       ! X=((X+Y)+(X-Y))/2
@@ -370,10 +370,10 @@ c frequency-dependent first hyperpolarizability (beta) SHG only
       enddo
       enddo
 !$omp end do
-!$omp end parallel      
+!$omp end parallel
 
       deallocate(inv_resp)
-      
+
       call cpu_time(end_time)
       print '("alpha Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
@@ -381,7 +381,7 @@ c frequency-dependent first hyperpolarizability (beta) SHG only
 
 c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
       call cpu_time(start_time)
-      
+
       if(ii==1)then
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
@@ -407,7 +407,7 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -455,7 +455,7 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
      .            A_list,B_list,counter_A,counter_B,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
 
-      beta(3,3,3)=A-B    
+      beta(3,3,3)=A-B
       !Off-diagonal
       !ijj
       call beta_resp_fast(1,2,2,X,Y,
@@ -511,7 +511,7 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
       beta(3,2,1)=beta(1,2,3)
       beta(2,3,1)=beta(1,2,3)
       beta(2,1,3)=beta(1,2,3)
-      
+
       else ! ijk=ikj because SHG (2 identical frequencies)
       !Diagonal
       call beta_resp_fast(1,1,1,X,Y,
@@ -528,7 +528,7 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
      .            A_list,B_list,counter_A,counter_B,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
 
-      beta(3,3,3)=A-B    
+      beta(3,3,3)=A-B
       !Off-diagonal
       !ijj
       call beta_resp_fast(1,2,2,X,Y,
@@ -542,7 +542,7 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
 
       beta(2,1,2)=A-B
       beta(2,2,1)=beta(2,1,2)
-      
+
       call beta_resp_fast(1,3,3,X,Y,
      .            A_list,B_list,counter_A,counter_B,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
@@ -617,13 +617,13 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
 
       beta(2,3,1)=A-B
       beta(2,1,3)=beta(2,3,1)
-      
+
       endif
 
       call cpu_time(end_time)
       print '("beta  Time = ",f12.2," minutes.")'
-     .      ,(end_time-start_time)/60.0      
-      
+     .      ,(end_time-start_time)/60.0
+
       betaVec_X=0.0
       betaVec_Y=0.0
       betaVec_Z=0.0
@@ -635,8 +635,8 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
       betaVec_X=betaVec_X/5.0
       betaVec_Y=betaVec_Y/5.0
       betaVec_Z=betaVec_Z/5.0
-      
-      
+
+
       write(*,*) '_____________________________________________
      .________'
       write(*,*)
@@ -667,167 +667,167 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
      .________'
 
       write(555,*)freq(ii)*27.21139,beta_HRS
-     
-!       beta(:,:,:)=0.0      
+
+!       beta(:,:,:)=0.0
 !       ! Let's save time applying symmetry conditions
 !       if(ii==1)then !static case Kleinman condition applied ijk = kij = jki
 !       ! only 10 tensor components computed
 !       !Diagonal
 !       call beta_resp(1,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,1,1)=A-B
 !       call beta_resp(2,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,2,2)=A-B
 !       call beta_resp(3,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
-!       beta(3,3,3)=A-B    
+!
+!       beta(3,3,3)=A-B
 !       !Off-diagonal
 !       !ijj
 !       call beta_resp(1,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,2,2)=A-B
 !       beta(2,1,2)=beta(1,2,2)
 !       beta(2,2,1)=beta(1,2,2)
 !       call beta_resp(1,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,3,3)=A-B
 !       beta(3,1,3)=beta(1,3,3)
 !       beta(3,3,1)=beta(1,3,3)
 !       call beta_resp(2,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,1,1)=A-B
 !       beta(1,2,1)=beta(2,1,1)
 !       beta(1,1,2)=beta(2,1,1)
 !       call beta_resp(2,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,3,3)=A-B
 !       beta(3,2,3)=beta(2,3,3)
 !       beta(3,3,2)=beta(2,3,3)
 !       call beta_resp(3,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,2,2)=A-B
 !       beta(2,3,2)=beta(3,2,2)
 !       beta(2,2,3)=beta(3,2,2)
 !       call beta_resp(3,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,1,1)=A-B
 !       beta(1,3,1)=beta(3,1,1)
 !       beta(1,1,3)=beta(3,1,1)
 !       !ijk
 !       call beta_resp(1,2,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,2,3)=A-B
 !       beta(1,3,2)=beta(1,2,3)
 !       beta(3,1,2)=beta(1,2,3)
 !       beta(3,2,1)=beta(1,2,3)
 !       beta(2,3,1)=beta(1,2,3)
 !       beta(2,1,3)=beta(1,2,3)
-!       
+!
 !       else ! ijk=ikj because SHG (2 identical frequencies)
 !       !Diagonal
 !       call beta_resp(1,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,1,1)=A-B
 !       call beta_resp(2,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,2,2)=A-B
 !       call beta_resp(3,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
-!       beta(3,3,3)=A-B    
+!
+!       beta(3,3,3)=A-B
 !       !Off-diagonal
 !       !ijj
 !       call beta_resp(1,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,2,2)=A-B
 !       call beta_resp(2,1,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,1,2)=A-B
 !       beta(2,2,1)=beta(2,1,2)
-!       
+!
 !       call beta_resp(1,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,3,3)=A-B
 !       call beta_resp(3,1,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,1,3)=A-B
 !       beta(3,3,1)=beta(3,1,3)
 !       call beta_resp(2,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,1,1)=A-B
 !       call beta_resp(1,2,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,2,1)=A-B
 !       beta(1,1,2)=beta(1,2,1)
 !       call beta_resp(2,3,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,3,3)=A-B
 !       call beta_resp(3,2,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,2,3)=A-B
 !       beta(3,3,2)=beta(3,2,3)
 !       call beta_resp(3,2,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,2,2)=A-B
 !       call beta_resp(2,3,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,3,2)=A-B
 !       beta(2,2,3)=beta(2,3,2)
 !       call beta_resp(3,1,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,1,1)=A-B
 !       call beta_resp(1,3,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,3,1)=A-B
 !       beta(1,1,3)=beta(1,3,1)
 !       !ijk
 !       call beta_resp(1,2,3,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(1,2,3)=A-B
 !       beta(1,3,2)=beta(1,2,3)
 !       call beta_resp(3,1,2,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(3,1,2)=A-B
 !       beta(3,2,1)=beta(3,1,2)
 !       call beta_resp(2,3,1,X,Y,
 !      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
-! 
+!
 !       beta(2,3,1)=A-B
 !       beta(2,1,3)=beta(2,3,1)
-!       
+!
 !       endif
-!       
+!
 !       call cpu_time(end_time)
 !       print '("beta  Time = ",f12.2," minutes.")'
-!      .      ,(end_time-start_time)/60.0      
-!       
+!      .      ,(end_time-start_time)/60.0
+!
 !       betaVec_X=0.0
 !       betaVec_Y=0.0
 !       betaVec_Z=0.0
@@ -839,8 +839,8 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
 !       betaVec_X=betaVec_X/5.0
 !       betaVec_Y=betaVec_Y/5.0
 !       betaVec_Z=betaVec_Z/5.0
-!       
-!       
+!
+!
 !       write(*,*) '_____________________________________________
 !      .________'
 !       write(*,*)
@@ -859,15 +859,15 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
 !       write(*,4444) 'beta_HRS',beta_HRS,' DR', DR
 !       write(*,*) '_____________________________________________
 !      .________'
-      
+
       enddo
       deallocate(XpY)
       deallocate(XmY)
       deallocate(X,Y)
       deallocate(inv_amb)
-111   format(A15,F20.6)      
+111   format(A15,F20.6)
 1111  format(A22,2A20)
-2222  format(A2,3F20.6)    
+2222  format(A2,3F20.6)
 3333  format(A16,F7.1,A1,F7.1,A1)
 4444  format(A12,F20.3,A12,F20.3)
 5555  format(A31,F7.1,A1,F7.1,A1,F7.1,A1)
@@ -877,14 +877,14 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
      .     /,2X,'rho=|Bj=3|/|Bj=1| :', F15.4,/)
       end subroutine lresp1
 
-      
+
       SUBROUTINE beta_resp_fast(ix,iy,iz,X,Y,
      .            A_list,B_list,counter_A,counter_B,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
       use commonresp
       use omp_lib
       implicit none
-      
+
       integer ::xx,yy,zz
       integer ::ix,iy,iz,wx,wy,wz,no,nv,nci,ii,maxconf,moci
       integer ::iconf(maxconf,2)
@@ -893,12 +893,12 @@ c beta  beta = A - B + C (here C=0 since no derivative of g^XC)
       real*8 ::Y(nci,num_freq+1,2,3)
       real*8 ::A,B
       real*8 ::A1,A2,A3,A4,A5,A6
-      real*8 ::B1,B2,B3,B4,B5,B6      
+      real*8 ::B1,B2,B3,B4,B5,B6
       integer ::counter_A,counter_B
       integer :: A_list(1:counter_A,1:3)
       integer :: B_list(1:counter_B,1:3)
 
-      
+
       A=0.0
       B=0.0
       A1=0.0
@@ -934,7 +934,7 @@ c A2 ix iz iy
       call A_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,A2,A_list,counter_A)
 
-c A3 iy iz ix 
+c A3 iy iz ix
       xx=iy
       wx=1
       yy=iz
@@ -943,8 +943,8 @@ c A3 iy iz ix
       wz=2
       call A_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,A3,A_list,counter_A)
-     
-c A4 iy ix iz 
+
+c A4 iy ix iz
       xx=iy
       wx=1
       yy=ix
@@ -952,9 +952,9 @@ c A4 iy ix iz
       zz=iz
       wz=1
       call A_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
-     .           mu,nci,moci,ii,A4,A_list,counter_A)    
-     
-c A5 iz ix iy 
+     .           mu,nci,moci,ii,A4,A_list,counter_A)
+
+c A5 iz ix iy
       xx=iz
       wx=1
       yy=ix
@@ -963,25 +963,25 @@ c A5 iz ix iy
       wz=1
       call A_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,A5,A_list,counter_A)
-     
-c A6 iz iy ix 
+
+c A6 iz iy ix
       xx=iz
       wx=1
       yy=iy
       wy=1
       zz=ix
-      wz=2  
+      wz=2
       call A_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,A6,A_list,counter_A)
-     
-      A=A1+A2+A3+A4+A5+A6     
-      
+
+      A=A1+A2+A3+A4+A5+A6
+
       !write(*,*) '______________'
       !write(*,*) 'A',ix,iy,iz
       !write(*,*) A1,A2,A3
       !write(*,*) A4,A5,A6
       !write(*,*) A
-      
+
 c B1 ix iy iz
       xx=ix
       wx=2
@@ -1001,8 +1001,8 @@ c B2 ix iz iy
       call B_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,B2,B_list,counter_B)
 
-      
-c B3 iy iz ix 
+
+c B3 iy iz ix
       xx=iy
       wx=1
       yy=iz
@@ -1012,8 +1012,8 @@ c B3 iy iz ix
       call B_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,B3,B_list,counter_B)
 
-      
-c B4 iy ix iz 
+
+c B4 iy ix iz
       xx=iy
       wx=1
       yy=ix
@@ -1023,8 +1023,8 @@ c B4 iy ix iz
       call B_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,B4,B_list,counter_B)
 
-      
-c B5 iz ix iy 
+
+c B5 iz ix iy
       xx=iz
       wx=1
       yy=ix
@@ -1034,7 +1034,7 @@ c B5 iz ix iy
       call B_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,B5,B_list,counter_B)
 
-      
+
 c B6 iz iy ix
       xx=iz
       wx=1
@@ -1044,18 +1044,18 @@ c B6 iz iy ix
       wz=2
       call B_beta_fast(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ii,B6,B_list,counter_B)
-      
+
       B=B1+B2+B3+B4+B5+B6
-      
+
 
       !write(*,*) 'B',ix,iy,iz
       !write(*,*) B1,B2,B3
       !write(*,*) B4,B5,B6
       !write(*,*) B
       !write(*,*) '______________'
-      
+
       end subroutine beta_resp_fast
-      
+
       Subroutine List_A(maxconf,no,nci,iconf,A_list,counter_A)
       use commonresp
       use omp_lib
@@ -1067,7 +1067,7 @@ c B6 iz iy ix
       integer ::A_list(1:counter_A,1:3)
       integer ::i,j,ij,kk,io1,io2,idum1,idum2
       integer ::jwrk
-    
+
       counter=1
 !$omp parallel private(j,i,kk,jwrk,io1,io2,idum1,idum2,ij)
 !$omp do ordered
@@ -1094,9 +1094,9 @@ c B6 iz iy ix
       !$OMP END ORDERED
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine List_A
-      
+
       Subroutine List_B(maxconf,no,nv,nci,iconf,B_list,counter_B)
       use commonresp
       use omp_lib
@@ -1133,10 +1133,10 @@ c B6 iz iy ix
       !$OMP END ORDERED
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine List_B
-      
-      
+
+
       Subroutine A_beta_fast(ix,iy,iz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ifreq,A,A_list,counter_A)
       use commonresp
@@ -1149,12 +1149,12 @@ c B6 iz iy ix
       real*8 ::X(nci,num_freq+1,2,3)
       real*8 ::Y(nci,num_freq+1,2,3)
       integer ::i,ii
-      
+
       integer ::counter_A
       integer ::A_list(1:counter_A,1:3)
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:A)
 !$omp do
@@ -1163,9 +1163,9 @@ c B6 iz iy ix
      .                         *Y(A_list(i,3),ii,wz,iz)
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_beta_fast
-      
+
       Subroutine B_beta_fast(ix,iy,iz,wx,wy,wz,X,Y,
      .           mu,nci,moci,ifreq,B,B_list,counter_B)
       use commonresp
@@ -1178,12 +1178,12 @@ c B6 iz iy ix
       real*8 ::X(nci,num_freq+1,2,3)
       real*8 ::Y(nci,num_freq+1,2,3)
       integer ::i,ii
-      
+
       integer ::counter_B
       integer ::B_list(1:counter_B,1:3)
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:B)
 !$omp do
@@ -1193,14 +1193,14 @@ c B6 iz iy ix
       enddo
 !$omp end do
 !$omp end parallel
-      end subroutine B_beta_fast     
-      
+      end subroutine B_beta_fast
+
       SUBROUTINE beta_resp(ix,iy,iz,X,Y,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
       use commonresp
       use omp_lib
       implicit none
-      
+
       integer ::xx,yy,zz
       integer ::ix,iy,iz,wx,wy,wz,no,nv,nci,ii,maxconf,moci
       integer ::iconf(maxconf,2)
@@ -1210,7 +1210,7 @@ c B6 iz iy ix
       real*8 ::A,B
       real*8 ::A1,A2,A3,A4,A5,A6
       real*8 ::B1,B2,B3,B4,B5,B6
-      
+
       A=0.0
       B=0.0
       A1=0.0
@@ -1235,7 +1235,7 @@ c A1 ix iy iz
       wz=1
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A1)
-     
+
 c A2 ix iz iy
       xx=ix
       wx=2
@@ -1246,7 +1246,7 @@ c A2 ix iz iy
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A2)
 
-c A3 iy iz ix 
+c A3 iy iz ix
       xx=iy
       wx=1
       yy=iz
@@ -1255,7 +1255,7 @@ c A3 iy iz ix
       wz=2
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A3)
-c A4 iy ix iz 
+c A4 iy ix iz
       xx=iy
       wx=1
       yy=ix
@@ -1263,8 +1263,8 @@ c A4 iy ix iz
       zz=iz
       wz=1
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
-     .           mu,maxconf,no,nv,nci,moci,ii,iconf,A4)      
-c A5 iz ix iy 
+     .           mu,maxconf,no,nv,nci,moci,ii,iconf,A4)
+c A5 iz ix iy
       xx=iz
       wx=1
       yy=ix
@@ -1273,24 +1273,24 @@ c A5 iz ix iy
       wz=1
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A5)
-c A6 iz iy ix 
+c A6 iz iy ix
       xx=iz
       wx=1
       yy=iy
       wy=1
       zz=ix
-      wz=2  
+      wz=2
       call A_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A6)
-     
-      A=A1+A2+A3+A4+A5+A6     
-      
+
+      A=A1+A2+A3+A4+A5+A6
+
       !write(*,*) '______________'
       !write(*,*) 'A',ix,iy,iz
       !write(*,*) A1,A2,A3
       !write(*,*) A4,A5,A6
       !write(*,*) A
-      
+
 c B1 ix iy iz
       xx=ix
       wx=2
@@ -1300,7 +1300,7 @@ c B1 ix iy iz
       wz=1
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B1)
-      
+
 c B2 ix iz iy
       xx=ix
       wx=2
@@ -1311,8 +1311,8 @@ c B2 ix iz iy
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B2)
 
-      
-c B3 iy iz ix 
+
+c B3 iy iz ix
       xx=iy
       wx=1
       yy=iz
@@ -1322,8 +1322,8 @@ c B3 iy iz ix
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B3)
 
-      
-c B4 iy ix iz 
+
+c B4 iy ix iz
       xx=iy
       wx=1
       yy=ix
@@ -1333,8 +1333,8 @@ c B4 iy ix iz
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B4)
 
-      
-c B5 iz ix iy 
+
+c B5 iz ix iy
       xx=iz
       wx=1
       yy=ix
@@ -1344,7 +1344,7 @@ c B5 iz ix iy
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B5)
 
-      
+
 c B6 iz iy ix
       xx=iz
       wx=1
@@ -1354,18 +1354,18 @@ c B6 iz iy ix
       wz=2
       call B_beta1(xx,yy,zz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B6)
-      
+
       B=B1+B2+B3+B4+B5+B6
-      
+
 
       !write(*,*) 'B',ix,iy,iz
       !write(*,*) B1,B2,B3
       !write(*,*) B4,B5,B6
       !write(*,*) B
       !write(*,*) '______________'
-      
+
       end subroutine beta_resp
-      
+
       Subroutine A_beta1(ix,iy,iz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,A)
       use commonresp
@@ -1382,9 +1382,9 @@ c B6 iz iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(j,i,kk,jwrk,io1,io2,idum1,idum2,ij)
 !$omp&         reduction(+:A)
 !$omp do
@@ -1408,9 +1408,9 @@ c B6 iz iy ix
       enddo
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_beta1
-      
+
       Subroutine B_beta1(ix,iy,iz,wx,wy,wz,X,Y,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,B)
       use commonresp
@@ -1427,9 +1427,9 @@ c B6 iz iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(j,i,kk,jwrk,iv1,iv2,idum1,idum2,ab)
 !$omp&         reduction(+:B)
 !$omp do
@@ -1455,16 +1455,16 @@ c B6 iz iy ix
 !$omp end do
 !$omp end parallel
       end subroutine B_beta1
-      
+
       SUBROUTINE HRS(beta,beta2_ZZZ, beta2_XZZ, beta_HRS, DR)
       implicit none
       INTEGER::i,j,k
       REAL*8::beta(1:3,1:3,1:3)
-      REAL*8:: beta2_ZZZ, beta2_XZZ, beta2_iii, beta2_iij, beta2_jii, 
-     .         beta2_ijk, beta_iii_beta_ijj, beta_jii_beta_iij, 
-     .         beta_iii_beta_jji,beta_iij_beta_jkk, beta_jii_beta_jkk, 
-     .         beta_iij_beta_kkj, beta_ijk_beta_jik, beta2_ijj, 
-     .         beta_iij_beta_jii, beta_ijj_beta_ikk, beta_iik_beta_jjk, 
+      REAL*8:: beta2_ZZZ, beta2_XZZ, beta2_iii, beta2_iij, beta2_jii,
+     .         beta2_ijk, beta_iii_beta_ijj, beta_jii_beta_iij,
+     .         beta_iii_beta_jji,beta_iij_beta_jkk, beta_jii_beta_jkk,
+     .         beta_iij_beta_kkj, beta_ijk_beta_jik, beta2_ijj,
+     .         beta_iij_beta_jii, beta_ijj_beta_ikk, beta_iik_beta_jjk,
      .         DR, beta_HRS
 
 ! Calcul du beta_HRS
@@ -1612,25 +1612,25 @@ c B6 iz iy ix
       enddo
 
 
-      beta2_ZZZ=1./7.*beta2_iii + 4./35.*beta2_iij + 1./35.*beta2_jii 
-     .          + 2./105.*beta2_ijk + 2./35.*beta_iii_beta_ijj 
-     .          + 4./35.*beta_jii_beta_iij + 4./35.*beta_iii_beta_jji 
-     .          + 4./105.*beta_iij_beta_jkk + 1./105.*beta_jii_beta_jkk 
+      beta2_ZZZ=1./7.*beta2_iii + 4./35.*beta2_iij + 1./35.*beta2_jii
+     .          + 2./105.*beta2_ijk + 2./35.*beta_iii_beta_ijj
+     .          + 4./35.*beta_jii_beta_iij + 4./35.*beta_iii_beta_jji
+     .          + 4./105.*beta_iij_beta_jkk + 1./105.*beta_jii_beta_jkk
      .          + 4./105.*beta_iij_beta_kkj + 4./105.*beta_ijk_beta_jik
 
 
-      beta2_XZZ=1./35.*beta2_iii + 4./105.*beta_iii_beta_ijj 
-     .          - 2./35.*beta_iii_beta_jji + 8./105.*beta2_iij 
-     .          - 2./105.*beta_iij_beta_jkk + 2./35.*beta2_ijk 
-     .          - 2./105.*beta_ijk_beta_jik + 3./35.*beta2_ijj 
-     .          - 2./35.*beta_iij_beta_jii + 1./35.*beta_ijj_beta_ikk 
+      beta2_XZZ=1./35.*beta2_iii + 4./105.*beta_iii_beta_ijj
+     .          - 2./35.*beta_iii_beta_jji + 8./105.*beta2_iij
+     .          - 2./105.*beta_iij_beta_jkk + 2./35.*beta2_ijk
+     .          - 2./105.*beta_ijk_beta_jik + 3./35.*beta2_ijj
+     .          - 2./35.*beta_iij_beta_jii + 1./35.*beta_ijj_beta_ikk
      .          - 2./105.*beta_iik_beta_jjk
-     
+
       DR=beta2_ZZZ/beta2_XZZ
       beta_HRS=sqrt(beta2_ZZZ+beta2_XZZ)
 
-      end subroutine HRS      
-      
+      end subroutine HRS
+
       subroutine PrintBeta(beta,unit)
       implicit none
 c     Arguments
@@ -1643,7 +1643,7 @@ c     Body of the function
       write(*,9000) (FIELDDIR(i), i=1,3)
       do i = 1,3
          do j = 1,3
-            write(*,9001) FIELDDIR(i),FIELDDIR(j),                     
+            write(*,9001) FIELDDIR(i),FIELDDIR(j),
      &                     (beta(i,j,k), k=1,3)
          write(unit,9002)(beta(i,j,k), k=1,3)
          end do
@@ -1652,15 +1652,15 @@ c     Body of the function
  9001 format(3X,A1,A1,".",3(2X,F15.6))
  9002 format(3(2X,F15.6))
       end
-      
-      
-      
+
+
+
       SUBROUTINE lresp_2PA(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
-     .no,nv,eci,Xci,Yci,nroot)  
+     .no,nv,eci,Xci,Yci,nroot)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci,no,nv
@@ -1668,13 +1668,13 @@ c     Body of the function
       integer, allocatable :: A_list(:,:)
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
-      integer ::counter_B      
+      integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::omega
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
@@ -1690,24 +1690,24 @@ c     Body of the function
       integer ::info
       integer, allocatable ::ipiv(:)
       real*4, allocatable ::work (:)
-      
+
       integer ::ix,iy,iz
       real*8 ::sigma(3,3),A,B,sigma_f,sigma_g,sigma_h
-      
+
       real*8 ::alpha_xx,alpha_xy,alpha_xz
       real*8 ::alpha_yy,alpha_yz
       real*8 ::alpha_zz
 
-      
+
       real*4 ::start_time,end_time
-      
+
       open(unit=60,file='2PA-abs',status='replace')
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-     
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -1716,15 +1716,15 @@ c     Body of the function
       write(*,*)'====================================================
      .=================='
       write(*,*)
-      
+
       allocate(inv_amb(nci*(nci+1)/2))
       inv_amb=amb
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_amb,ipiv,info)
-      call ssptri(uplo,nci,inv_amb,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_amb,ipiv,work,info)
       deallocate(ipiv,work)
-      
+
       allocate( XpY(nci,3))
       allocate( XmY(nci,3))
       allocate( X(nci,3),
@@ -1739,16 +1739,16 @@ c     Body of the function
       call cpu_time(start_time)
       allocate(inv_resp(nci*(nci+1)/2))
       inv_resp=apb-omega**2.0*inv_amb
-      
+
 
       uplo='U'
       allocate(ipiv(1:nci),work(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info) 
+      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
       deallocate(ipiv,work)
-      
-      
-      
+
+
+
 !$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
 !$omp&                 reduction (+:XpY)
 !$omp do
@@ -1784,9 +1784,9 @@ c     Body of the function
 !             io=iconf(j,1)
 !             iv=iconf(j,2)
 !             idum1=max(io,iv)
-!             idum2=min(io,iv) 
+!             idum2=min(io,iv)
 !             ij=idum2+idum1*(idum1-1)/2
-!       alpha_xx=alpha_xx-(xl(ij)*XpY(j,1))*2.0 
+!       alpha_xx=alpha_xx-(xl(ij)*XpY(j,1))*2.0
 !       alpha_xy=alpha_xy-(xl(ij)*XpY(j,2))*2.0
 !       alpha_xz=alpha_xz-(xl(ij)*XpY(j,3))*2.0
 !       alpha_yy=alpha_yy-(yl(ij)*XpY(j,2))*2.0
@@ -1809,7 +1809,7 @@ c     Body of the function
 !       write(*,111) 'Mean of alpha',(alpha_xx+alpha_yy+alpha_zz)/3.0
 !       write(*,*)
 
-      
+
       ! extract X and Y from XpY
       ! (X-Y)=omega*(A-B)^-1 (X+Y)
       ! X=((X+Y)+(X-Y))/2
@@ -1838,14 +1838,14 @@ c     Body of the function
       enddo
       enddo
 !$omp end do
-!$omp end parallel      
+!$omp end parallel
 
       deallocate(inv_resp)
-      
+
       call cpu_time(end_time)
       print '("alpha Time = ",f12.2," minutes.")'
-     .      ,(end_time-start_time)/60.0 
-     
+     .      ,(end_time-start_time)/60.0
+
       if(ii==1)then
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
@@ -1872,7 +1872,7 @@ c     Body of the function
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -1899,7 +1899,7 @@ c     Body of the function
      .      ,(end_time-start_time)/60.0
       endif
 
-c sigma  sigma = -A + B 
+c sigma  sigma = -A + B
       call cpu_time(start_time)
       !
       ! Fast version
@@ -1916,7 +1916,7 @@ c sigma  sigma = -A + B
       endif
       enddo
       enddo
-      
+
       sigma_f=0.0
       sigma_g=0.0
       sigma_h=0.0
@@ -1930,12 +1930,12 @@ c sigma  sigma = -A + B
       sigma_f=sigma_f/30.0
       sigma_g=sigma_g/30.0
       sigma_h=sigma_h/30.0
-      
-      
-      
+
+
+
       call cpu_time(end_time)
       print '("2PA  Time = ",f12.2," minutes.")'
-     .      ,(end_time-start_time)/60.0   
+     .      ,(end_time-start_time)/60.0
       write(*,*)
       write(*,3333)'Delta (',eci(ii)*27.21139,')'
       write(*,*)
@@ -1953,9 +1953,9 @@ c sigma  sigma = -A + B
      .                               +3.0*sigma_h
       write(*,4444)'rho = //*(_|_)**-1 =',(2.0*sigma_f+2.0*sigma_g
      .       +2.0*sigma_h)/(-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h)
-     
+
 !       call cpu_time(start_time)
-!       ! 
+!       !
 !       ! regular version
 !       !
 !       sigma(:,:)=0.0
@@ -1969,7 +1969,7 @@ c sigma  sigma = -A + B
 !       endif
 !       enddo
 !       enddo
-!       
+!
 !       sigma_f=0.0
 !       sigma_g=0.0
 !       sigma_h=0.0
@@ -1983,12 +1983,12 @@ c sigma  sigma = -A + B
 !       sigma_f=sigma_f/30.0
 !       sigma_g=sigma_g/30.0
 !       sigma_h=sigma_h/30.0
-!       
-!       
-!       
+!
+!
+!
 !       call cpu_time(end_time)
 !       print '("2PA  Time = ",f12.2," minutes.")'
-!      .      ,(end_time-start_time)/60.0   
+!      .      ,(end_time-start_time)/60.0
 !       write(*,*)
 !       write(*,3333)'Delta (',eci(ii)*27.21139,')'
 !       write(*,*)
@@ -1998,7 +1998,7 @@ c sigma  sigma = -A + B
 !       write(*,2222)'z',sigma(3,1),sigma(3,2),sigma(3,3)
 !       write(*,*)
 !       write(*,5555)'F =',sigma_f,' G =',sigma_G,' H =',sigma_H
-!       !write(*,*)'like in gamess, only F and G, and wrong 
+!       !write(*,*)'like in gamess, only F and G, and wrong
 !       !.definition for circ. and rho'
 !       !write(*,*)'Sigma_2PA_//   =',2.0*sigma_f+4.0*sigma_g
 !       !write(*,*)'Sigma_2PA_circ =',-2.0*sigma_f+6.0*sigma_g
@@ -2014,7 +2014,7 @@ c sigma  sigma = -A + B
 !      .                               +3.0*sigma_h
 !       write(*,4444)'rho = //*(_|_)**-1 =',(2.0*sigma_f+2.0*sigma_g
 !      .       +2.0*sigma_h)/(-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h)
-     
+
       write(60,6666)ii,eci(ii)*27.21139,2.0*sigma_f+2.0*sigma_g
      .+2.0*sigma_h,-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h,-2.0*sigma_f
      .+3.0*sigma_g+3.0*sigma_h,(2.0*sigma_f+2.0*sigma_g
@@ -2033,16 +2033,16 @@ c sigma  sigma = -A + B
       write(*,*)'====================================================
      .=================='
       write(*,*)
-111   format(A15,F20.6)      
+111   format(A15,F20.6)
 1111  format(A22,2A20)
-2222  format(A2,3F20.6) 
+2222  format(A2,3F20.6)
 3334  format(A16,F7.3,A1,F7.3,A1)
 3333  format(A16,F7.3,A1)
 4444  format(A20,F20.3)
 5555  format(A3,F20.3,A4,F20.3,A4,F20.3)
 6666  format(I3,F7.3,4F20.3)
       end subroutine lresp_2PA
-      
+
       SUBROUTINE TPA_resp_fast(ix,iy,X,Y,Xci,Yci,nroot,
      .            A_list,B_list,counter_A,counter_B,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
@@ -2050,7 +2050,7 @@ c sigma  sigma = -A + B
       use commonresp
       use omp_lib
       implicit none
-      
+
       integer ::xx,yy,nroot
       integer ::ix,iy,no,nv,nci,ii,maxconf,moci
       integer ::iconf(maxconf,2)
@@ -2064,7 +2064,7 @@ c sigma  sigma = -A + B
       integer ::counter_A,counter_B
       integer :: A_list(1:counter_A,1:3)
       integer :: B_list(1:counter_B,1:3)
-      
+
       A=0.0
       B=0.0
       A1=0.0
@@ -2101,7 +2101,7 @@ c A4 n iy ix
      .            A_list,counter_A,
      .           mu,nci,moci,ii,A4)
       A=A1+A2+A3+A4
-      
+
 c B1 ix iy n
       xx=ix
       yy=iy
@@ -2127,9 +2127,9 @@ c B4 n iy ix
      .            B_list,counter_B,
      .           mu,nci,moci,ii,B4)
       B=B1+B2+B3+B4
-      
+
       end subroutine TPA_resp_fast
-      
+
       Subroutine A_2PA_1_fast(ix,iy,X,Y,Xci,Yci,nroot,
      .           A_list,counter_A,
      .           mu,nci,moci,ifreq,A)
@@ -2145,12 +2145,12 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,ii
-      
+
       integer ::counter_A
       integer ::A_list(1:counter_A,1:3)
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:A)
 !$omp do
@@ -2159,9 +2159,9 @@ c B4 n iy ix
      .                 *dble(Yci(A_list(i,3),ii))
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_2PA_1_fast
-      
+
       Subroutine A_2PA_2_fast(ix,iy,X,Y,Xci,Yci,nroot,
      .           A_list,counter_A,
      .           mu,nci,moci,ifreq,A)
@@ -2177,12 +2177,12 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,ii
-      
+
       integer ::counter_A
       integer ::A_list(1:counter_A,1:3)
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:A)
 !$omp do
@@ -2191,9 +2191,9 @@ c B4 n iy ix
      .                                 *Y(A_list(i,3),iy)
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_2PA_2_fast
-      
+
       Subroutine B_2PA_1_fast(ix,iy,X,Y,Xci,Yci,nroot,
      .           B_list,counter_B,
      .           mu,nci,moci,ifreq,B)
@@ -2209,12 +2209,12 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,ii
-      
+
       integer ::counter_B
       integer ::B_list(1:counter_B,1:3)
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:B)
 !$omp do
@@ -2225,7 +2225,7 @@ c B4 n iy ix
 !$omp end do
 !$omp end parallel
       end subroutine B_2PA_1_fast
-      
+
       Subroutine B_2PA_2_fast(ix,iy,X,Y,Xci,Yci,nroot,
      .           B_list,counter_B,
      .           mu,nci,moci,ifreq,B)
@@ -2241,12 +2241,12 @@ c B4 n iy ix
       real*8 ::Y(nci,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot)
       integer ::i,ii
-      
+
       integer ::counter_B
       integer ::B_list(1:counter_B,1:3)
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(i)
 !$omp&         reduction(+:B)
 !$omp do
@@ -2256,16 +2256,16 @@ c B4 n iy ix
       enddo
 !$omp end do
 !$omp end parallel
-      end subroutine B_2PA_2_fast      
-      
-      
-      
+      end subroutine B_2PA_2_fast
+
+
+
       SUBROUTINE TPA_resp(ix,iy,X,Y,Xci,Yci,nroot,
      .            mu,maxconf,no,nv,nci,moci,ii,iconf,A,B)
       use commonresp
       use omp_lib
       implicit none
-      
+
       integer ::xx,yy,nroot
       integer ::ix,iy,no,nv,nci,ii,maxconf,moci
       integer ::iconf(maxconf,2)
@@ -2276,7 +2276,7 @@ c B4 n iy ix
       real*8 ::A,B
       real*8 ::A1,A2,A3,A4
       real*8 ::B1,B2,B3,B4
-      
+
       A=0.0
       B=0.0
       A1=0.0
@@ -2309,7 +2309,7 @@ c A4 n iy ix
       call A_2PA_2(xx,yy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,A4)
       A=A1+A2+A3+A4
-      
+
 c B1 ix iy n
       xx=ix
       yy=iy
@@ -2331,12 +2331,12 @@ c B4 n iy ix
       call B_2PA_2(xx,yy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ii,iconf,B4)
       B=B1+B2+B3+B4
-      
+
       end subroutine TPA_resp
-      
-      
-      
-      
+
+
+
+
       Subroutine A_2PA_1(ix,iy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,A)
       use commonresp
@@ -2354,9 +2354,9 @@ c B4 n iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(j,i,kk,jwrk,io1,io2,idum1,idum2,ij)
 !$omp&         reduction(+:A)
 !$omp do
@@ -2380,9 +2380,9 @@ c B4 n iy ix
       enddo
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_2PA_1
-      
+
       Subroutine A_2PA_2(ix,iy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,A)
       use commonresp
@@ -2400,9 +2400,9 @@ c B4 n iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      A=0.0  
+      A=0.0
 !$omp parallel private(j,i,kk,jwrk,io1,io2,idum1,idum2,ij)
 !$omp&         reduction(+:A)
 !$omp do
@@ -2426,9 +2426,9 @@ c B4 n iy ix
       enddo
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       end subroutine A_2PA_2
-      
+
       Subroutine B_2PA_1(ix,iy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,B)
       use commonresp
@@ -2446,9 +2446,9 @@ c B4 n iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(j,i,kk,jwrk,iv1,iv2,idum1,idum2,ab)
 !$omp&         reduction(+:B)
 !$omp do
@@ -2474,7 +2474,7 @@ c B4 n iy ix
 !$omp end do
 !$omp end parallel
       end subroutine B_2PA_1
-      
+
       Subroutine B_2PA_2(ix,iy,X,Y,Xci,Yci,nroot,
      .           mu,maxconf,no,nv,nci,moci,ifreq,iconf,B)
       use commonresp
@@ -2492,9 +2492,9 @@ c B4 n iy ix
       integer*8 ::lin8
       integer ::jwrk
       logical ::check
-      
+
       ii=ifreq
-      B=0.0  
+      B=0.0
 !$omp parallel private(j,i,kk,jwrk,iv1,iv2,idum1,idum2,ab)
 !$omp&         reduction(+:B)
 !$omp do
@@ -2520,38 +2520,38 @@ c B4 n iy ix
 !$omp end do
 !$omp end parallel
       end subroutine B_2PA_2
-      
+
       subroutine pol_sos(nroot,nci,eci,Xci,Yci,xl,yl,zl,moci,
      .maxconf,iconf,ak)
       use commonresp
       use omp_lib
       implicit none
-      
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::omega
       real*4 ::freq(num_freq+1)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
-      
+
       real*8 ::alpha_xx,alpha_xy,alpha_xz
       real*8 ::alpha_yy,alpha_yz
       real*8 ::alpha_zz,ak
       real*8 ::x,y,z
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-      
+
       open(unit=101,file='wavelength',form='formatted',status='old')
       freq(1)=0.0
 
@@ -2573,7 +2573,7 @@ c B4 n iy ix
       alpha_yy=0.0
       alpha_yz=0.0
       alpha_zz=0.0
-      
+
       Do i=1,nroot
       x=0.0
       y=0.0
@@ -2582,14 +2582,14 @@ c B4 n iy ix
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
-            idum2=min(io,iv) 
+            idum2=min(io,iv)
             ij=idum2+idum1*(idum1-1)/2
-            
+
       x=x+mu(ij,1)*(dble(Xci(j,i))+dble(Yci(j,i)))
       y=y+mu(ij,2)*(dble(Xci(j,i))+dble(Yci(j,i)))
       z=z+mu(ij,3)*(dble(Xci(j,i))+dble(Yci(j,i)))
       enddo
-      
+
       alpha_xx=alpha_xx-(ak*x*x)
      .                 *((1.0/(dble(omega)-dble(eci(i))))
      .                  -(1.0/(dble(omega)+dble(eci(i)))))
@@ -2598,7 +2598,7 @@ c B4 n iy ix
      .                  -(1.0/(dble(omega)+dble(eci(i)))))
       alpha_zz=alpha_zz-(ak*z*z)
      .                 *((1.0/(dble(omega)-dble(eci(i))))
-     .                  -(1.0/(dble(omega)+dble(eci(i))))) 
+     .                  -(1.0/(dble(omega)+dble(eci(i)))))
       alpha_xy=alpha_xy-(ak*x*y)
      .                 *((1.0/(dble(omega)-dble(eci(i))))
      .                  -(1.0/(dble(omega)+dble(eci(i)))))
@@ -2620,22 +2620,22 @@ c B4 n iy ix
       write(*,*)
       write(*,111) 'Mean of alpha',(alpha_xx+alpha_yy+alpha_zz)/3.0
       write(*,*)
-      
-      
-      
+
+
+
       enddo
-111   format(A15,F20.6)      
+111   format(A15,F20.6)
 1111  format(A22,2A20)
-2222  format(A2,3F20.6)    
+2222  format(A2,3F20.6)
 3333  format(A16,F7.1,A1,F7.1,A1)
       end subroutine pol_sos
-      
+
       subroutine lresp_ESA(nci,iconf,maxconf,xl,yl,zl,moci,
-     .no,nv,eci,Xci,Yci,nroot,xmolw,thr)  
+     .no,nv,eci,Xci,Yci,nroot,xmolw,thr)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci,no,nv
@@ -2643,31 +2643,31 @@ c B4 n iy ix
       integer, allocatable :: A_list(:,:)
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
-      integer ::counter_B      
+      integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xmolw
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
       real*4 ::delta_e(nroot)
       real*8 ::thr,umerk(4,nroot)
-      
+
       real*8 ::mu_s2s(nroot,3),A1,A2,B1,B2,osc_strength(nroot)
-      
+
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -2676,7 +2676,7 @@ c B4 n iy ix
       write(*,*)'====================================================
      .=================='
       write(*,*)
-      
+
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
@@ -2702,7 +2702,7 @@ c B4 n iy ix
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -2777,7 +2777,7 @@ c B4 n iy ix
       delta_e(ii)=eci(ii)-eci(state2opt)
       osc_strength(ii)=2.0/3.0*dble(delta_e(ii))*
      .(mu_s2s(ii,1)**2.0+mu_s2s(ii,2)**2.0+mu_s2s(ii,3)**2.0)
-     
+
       write(*,11) state2opt, ii, (delta_e(ii))*27.21139,
      .1.d+7/(delta_e(ii)*2.19474625d+5),
      .osc_strength(ii)
@@ -2795,15 +2795,15 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f9.1,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
+
       end subroutine lresp_ESA
-      
+
       subroutine lresp_ESAbis(nci,iconf,maxconf,xl,yl,zl,moci,
-     .no,nv,eci,Xci,Yci,nroot,mu_s2s)  
+     .no,nv,eci,Xci,Yci,nroot,mu_s2s)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci,no,nv
@@ -2811,27 +2811,27 @@ c B4 n iy ix
       integer, allocatable :: A_list(:,:)
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
-      integer ::counter_B      
+      integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
-      
+
       real*8 ::mu_s2s(nroot,nroot,3),A1,A2,B1,B2,osc_strength
-      
+
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -2840,7 +2840,7 @@ c B4 n iy ix
       write(*,*)'====================================================
      .=================='
       write(*,*)
-      
+
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
@@ -2866,7 +2866,7 @@ c B4 n iy ix
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -2956,44 +2956,44 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
+
       end subroutine lresp_ESAbis
-      
-      
+
+
       subroutine hyperpol_sos(nroot,nci,eci,Xci,Yci,xl,yl,zl,moci,
      .maxconf,iconf,no,nv)
       use commonresp
       use omp_lib
       implicit none
-      
-      ! This subroutine uses <k|mu-mu_0|n> dipole moments that are unrelaxed, 
+
+      ! This subroutine uses <k|mu-mu_0|n> dipole moments that are unrelaxed,
       !           the result should be different that with response functions
-      
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot,no,nv
       integer ::ix,iy,iz,iroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::omega
       real*4 ::freq(num_freq+1)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
-      
+
       real*8 ::beta(3,3,3)
       real*8 ::mu_s(nroot,3)
       real*8 ::mu_s2s(nroot,nroot,3)
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-      
+
       open(unit=101,file='wavelength',form='formatted',status='old')
       freq(1)=0.0
       num_freq=1
@@ -3013,9 +3013,9 @@ c B4 n iy ix
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
-            idum2=min(io,iv) 
+            idum2=min(io,iv)
             ij=idum2+idum1*(idum1-1)/2
-            
+
       mu_s(i,1)=mu_s(i,1)+mu(ij,1)*(dble(Xci(j,i))+dble(Yci(j,i)))
       mu_s(i,2)=mu_s(i,2)+mu(ij,2)*(dble(Xci(j,i))+dble(Yci(j,i)))
       mu_s(i,3)=mu_s(i,3)+mu(ij,3)*(dble(Xci(j,i))+dble(Yci(j,i)))
@@ -3029,7 +3029,7 @@ c B4 n iy ix
       Do iroot=1, num_freq+1
       omega=freq(iroot)
       beta=0.0
-     
+
       Do ix=1,3
       Do iy=1,3
       Do iz=1,3
@@ -3071,38 +3071,38 @@ c B4 n iy ix
      .________'
       enddo
 5555  format(A31,F7.1,A1,F7.1,A1,F7.1,A1)
-      end subroutine hyperpol_sos 
-      
-      
+      end subroutine hyperpol_sos
+
+
       subroutine tpa_sos(nroot,nci,eci,Xci,Yci,xl,yl,zl,moci,
      .maxconf,iconf,no,nv)
       use commonresp
       use omp_lib
       implicit none
-      
-      ! This subroutine uses <k|mu-mu_0|n> dipole moments that are unrelaxed, 
+
+      ! This subroutine uses <k|mu-mu_0|n> dipole moments that are unrelaxed,
       !           the result should be different that with response functions
-      
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot,no,nv
       integer ::ix,iy,iz,iroot
       integer ::maxconf,moci
       integer ::iconf(maxconf,2)
       integer*8 ::lin8
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::omega
       real*4 ::freq(num_freq+1)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
-      
+
       real*8 ::sigma(3,3)
       real*8 ::mu_s(nroot,3)
       real*8 ::mu_s2s(nroot,nroot,3)
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
@@ -3114,23 +3114,23 @@ c B4 n iy ix
             io=iconf(j,1)
             iv=iconf(j,2)
             idum1=max(io,iv)
-            idum2=min(io,iv) 
+            idum2=min(io,iv)
             ij=idum2+idum1*(idum1-1)/2
-            
+
       mu_s(i,1)=mu_s(i,1)+mu(ij,1)*(dble(Xci(j,i))+dble(Yci(j,i)))
       mu_s(i,2)=mu_s(i,2)+mu(ij,2)*(dble(Xci(j,i))+dble(Yci(j,i)))
       mu_s(i,3)=mu_s(i,3)+mu(ij,3)*(dble(Xci(j,i))+dble(Yci(j,i)))
       enddo
       mu_s(i,:)=mu_s(i,:)*2.0**(1.0/2.0)
       enddo
-      
+
       call lresp_ESAbis(nci,iconf,maxconf,xl,yl,zl,moci,
      .no,nv,eci,Xci,Yci,nroot,mu_s2s)
-      
+
       Do iroot=1, nroot
       omega=eci(iroot)/2.0
       sigma=0.0
-     
+
       Do ix=1,3
       Do iy=1,3
       Do ii=1,nroot
@@ -3151,15 +3151,15 @@ c B4 n iy ix
       enddo
 3333  format(A16,F7.3,A1)
 1111  format(A22,2A20)
-2222  format(A2,3F20.6) 
-      end subroutine tpa_sos       
-      
+2222  format(A2,3F20.6)
+      end subroutine tpa_sos
+
       subroutine lresp_ESA_tda(nci,iconf,maxconf,xl,yl,zl,moci,
-     .no,nv,eci,Xci,nroot,xmolw,thr)  
+     .no,nv,eci,Xci,nroot,xmolw,thr)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,moci,no,nv
@@ -3167,31 +3167,31 @@ c B4 n iy ix
       integer, allocatable :: A_list(:,:)
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
-      integer ::counter_B      
+      integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xmolw
-      
+
       real*8 ::xl(moci*(moci+1)/2)
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
-      
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::Xci(nci,nroot),eci(nci)
       real*4 ::delta_e(nroot)
       real*8 ::thr,umerk(4,nroot)
-      
+
       real*8 ::mu_s2s(nroot,3),A1,B1,osc_strength(nroot)
-      
+
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mu=0.0
       mu(:,1)=xl(:)
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -3200,7 +3200,7 @@ c B4 n iy ix
       write(*,*)'====================================================
      .=================='
       write(*,*)
-      
+
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
@@ -3226,7 +3226,7 @@ c B4 n iy ix
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -3295,7 +3295,7 @@ c B4 n iy ix
       delta_e(ii)=eci(ii)-eci(state2opt)
       osc_strength(ii)=2.0/3.0*dble(delta_e(ii))*
      .(mu_s2s(ii,1)**2.0+mu_s2s(ii,2)**2.0+mu_s2s(ii,3)**2.0)
-     
+
       write(*,11) state2opt, ii, (delta_e(ii))*27.21139,
      .1.d+7/(delta_e(ii)*2.19474625d+5),
      .osc_strength(ii)
@@ -3313,17 +3313,17 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f9.1,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
-      end subroutine lresp_ESA_tda      
-      
-      
+
+      end subroutine lresp_ESA_tda
+
+
       subroutine ulresp_ESA(nexa,nexb,nci,iconfa,iconfb,maxconfa,
      .                maxconfb,xla,yla,zla,xlb,ylb,zlb,mocia,mocib,
-     .              noa,nob,nva,nvb,eci,Xci,Yci,nroot,xmolw,thr,ak)  
+     .              noa,nob,nva,nvb,eci,Xci,Yci,nroot,xmolw,thr,ak)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::nexa,nexb,maxconfa,maxconfb,mocia,mocib
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
@@ -3332,35 +3332,35 @@ c B4 n iy ix
       integer, allocatable :: A_lista(:,:)
       integer ::counter_Aa
       integer, allocatable :: B_lista(:,:)
-      integer ::counter_Ba    
+      integer ::counter_Ba
       integer, allocatable :: A_listb(:,:)
       integer ::counter_Ab
       integer, allocatable :: B_listb(:,:)
-      integer ::counter_Bb  
+      integer ::counter_Bb
       integer*8 ::lin8
-      
+
       real*8 ::xmolw,ak
-      
+
       real*8 ::xla(mocia*(mocia+1)/2)
       real*8 ::yla(mocia*(mocia+1)/2)
       real*8 ::zla(mocia*(mocia+1)/2)
-      
+
       real*8 ::xlb(mocib*(mocib+1)/2)
       real*8 ::ylb(mocib*(mocib+1)/2)
       real*8 ::zlb(mocib*(mocib+1)/2)
-      
+
       real*8 ::mua(mocia*(mocia+1)/2,3)
       real*8 ::mub(mocib*(mocib+1)/2,3)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
       real*4 ::delta_e(nroot)
       real*8 ::thr,umerk(4,nroot)
-      
+
       real*8 ::mu_s2s(nroot,3),Aa1,Aa2,Ba1,Ba2,osc_strength(nroot)
       real*8 ::Ab1,Ab2,Bb1,Bb2
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mua=0.0
       mub=0.0
       mua(:,1)=xla(:)
@@ -3369,7 +3369,7 @@ c B4 n iy ix
       mub(:,1)=xlb(:)
       mub(:,2)=ylb(:)
       mub(:,3)=zlb(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -3378,16 +3378,16 @@ c B4 n iy ix
       write(*,*)'====================================================
      .=================='
       write(*,*)
-    
-      
-      
+
+
+
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
-      
+
             ! alpha block
-            
-            
+
+
       call cpu_time(start_time)
       counter_Aa=0
 !$omp parallel private(j,i,kk)
@@ -3408,7 +3408,7 @@ c B4 n iy ix
       A_lista=-9999
       call List_A(maxconfa,noa,nexa,iconfa,A_lista,counter_Aa)
 
-      
+
       counter_Ba=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_Ba)
@@ -3427,10 +3427,10 @@ c B4 n iy ix
       allocate(B_lista(1:counter_Ba,1:3))
       B_lista=-9999
       call List_B(maxconfa,noa,nva,nexa,iconfa,B_lista,counter_Ba)
-      
+
             ! beta block
-            
-            
+
+
       call cpu_time(start_time)
       counter_Ab=0
 !$omp parallel private(j,i,kk)
@@ -3451,7 +3451,7 @@ c B4 n iy ix
       A_listb=-9999
       call List_A(maxconfb,nob,nexb,iconfb,A_listb,counter_Ab)
 
-      
+
       counter_Bb=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_Bb)
@@ -3470,8 +3470,8 @@ c B4 n iy ix
       allocate(B_listb(1:counter_Bb,1:3))
       B_listb=-9999
       call List_B(maxconfb,nob,nvb,nexb,iconfb,B_listb,counter_Bb)
-      
-      
+
+
       call cpu_time(end_time)
       print '("A & B indexes list Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
@@ -3492,10 +3492,10 @@ c B4 n iy ix
       Ab2=0.0
       Bb1=0.0
       Bb2=0.0
-      
+
       ! alpha
-      
-      
+
+
 !$omp parallel private(i)
 !$omp&         reduction(+:Aa1,Aa2)
 !$omp do
@@ -3521,10 +3521,10 @@ c B4 n iy ix
 !$omp end do
 !$omp end parallel
 
-      
+
       ! beta
-      
-      
+
+
 !$omp parallel private(i)
 !$omp&         reduction(+:Ab1,Ab2)
 !$omp do
@@ -3552,7 +3552,7 @@ c B4 n iy ix
 
       ! divided by two because the beta formula is divided by two in the unrestricted case
 
-      
+
       mu_s2s(ii,ix)=-(Aa1+Aa2-Ba1-Ba2+Ab1+Ab2-Bb1-Bb2)/2.0
       write(*,*) ix, mu_s2s(ii,ix)
       enddo
@@ -3568,7 +3568,7 @@ c B4 n iy ix
       delta_e(ii)=eci(ii)-eci(state2opt)
       osc_strength(ii)=2.0/3.0*dble(delta_e(ii))*
      .(mu_s2s(ii,1)**2.0+mu_s2s(ii,2)**2.0+mu_s2s(ii,3)**2.0)
-     
+
       write(*,11) state2opt, ii, (delta_e(ii))*27.21139,
      .1.d+7/(delta_e(ii)*2.19474625d+5),
      .osc_strength(ii)
@@ -3586,16 +3586,16 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f9.1,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
+
       end subroutine ulresp_ESA
-      
+
       subroutine ulresp_ESA_tda(nexa,nexb,nci,iconfa,iconfb,
      .      maxconfa,maxconfb,xla,yla,zla,xlb,ylb,zlb,mocia,mocib,
-     .              noa,nob,nva,nvb,eci,Xci,nroot,xmolw,thr,ak)  
+     .              noa,nob,nva,nvb,eci,Xci,nroot,xmolw,thr,ak)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::nexa,nexb,maxconfa,maxconfb,mocia,mocib
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
@@ -3604,35 +3604,35 @@ c B4 n iy ix
       integer, allocatable :: A_lista(:,:)
       integer ::counter_Aa
       integer, allocatable :: B_lista(:,:)
-      integer ::counter_Ba    
+      integer ::counter_Ba
       integer, allocatable :: A_listb(:,:)
       integer ::counter_Ab
       integer, allocatable :: B_listb(:,:)
-      integer ::counter_Bb  
+      integer ::counter_Bb
       integer*8 ::lin8
-      
+
       real*8 ::xmolw,ak
-      
+
       real*8 ::xla(mocia*(mocia+1)/2)
       real*8 ::yla(mocia*(mocia+1)/2)
       real*8 ::zla(mocia*(mocia+1)/2)
-      
+
       real*8 ::xlb(mocib*(mocib+1)/2)
       real*8 ::ylb(mocib*(mocib+1)/2)
       real*8 ::zlb(mocib*(mocib+1)/2)
-      
+
       real*8 ::mua(mocia*(mocia+1)/2,3)
       real*8 ::mub(mocib*(mocib+1)/2,3)
       real*4 ::Xci(nci,nroot),eci(nci)
       real*4 ::delta_e(nroot)
       real*8 ::thr,umerk(4,nroot)
-      
+
       real*8 ::mu_s2s(nroot,3),Aa1,Ba1,osc_strength(nroot)
       real*8 ::Ab1,Bb1
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
-      
+
       mua=0.0
       mub=0.0
       mua(:,1)=xla(:)
@@ -3641,7 +3641,7 @@ c B4 n iy ix
       mub(:,1)=xlb(:)
       mub(:,2)=ylb(:)
       mub(:,3)=zlb(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -3650,16 +3650,16 @@ c B4 n iy ix
       write(*,*)'====================================================
      .=================='
       write(*,*)
-    
-      
-      
+
+
+
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
-      
+
             ! alpha block
-            
-            
+
+
       call cpu_time(start_time)
       counter_Aa=0
 !$omp parallel private(j,i,kk)
@@ -3680,7 +3680,7 @@ c B4 n iy ix
       A_lista=-9999
       call List_A(maxconfa,noa,nexa,iconfa,A_lista,counter_Aa)
 
-      
+
       counter_Ba=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_Ba)
@@ -3699,10 +3699,10 @@ c B4 n iy ix
       allocate(B_lista(1:counter_Ba,1:3))
       B_lista=-9999
       call List_B(maxconfa,noa,nva,nexa,iconfa,B_lista,counter_Ba)
-      
+
             ! beta block
-            
-            
+
+
       call cpu_time(start_time)
       counter_Ab=0
 !$omp parallel private(j,i,kk)
@@ -3723,7 +3723,7 @@ c B4 n iy ix
       A_listb=-9999
       call List_A(maxconfb,nob,nexb,iconfb,A_listb,counter_Ab)
 
-      
+
       counter_Bb=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_Bb)
@@ -3742,8 +3742,8 @@ c B4 n iy ix
       allocate(B_listb(1:counter_Bb,1:3))
       B_listb=-9999
       call List_B(maxconfb,nob,nvb,nexb,iconfb,B_listb,counter_Bb)
-      
-      
+
+
       call cpu_time(end_time)
       print '("A & B indexes list Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
@@ -3760,10 +3760,10 @@ c B4 n iy ix
       Ba1=0.0
       Ab1=0.0
       Bb1=0.0
-      
+
       ! alpha
-      
-      
+
+
 !$omp parallel private(i)
 !$omp&         reduction(+:Aa1)
 !$omp do
@@ -3783,10 +3783,10 @@ c B4 n iy ix
 !$omp end do
 !$omp end parallel
 
-      
+
       ! beta
-      
-      
+
+
 !$omp parallel private(i)
 !$omp&         reduction(+:Ab1)
 !$omp do
@@ -3823,7 +3823,7 @@ c B4 n iy ix
       delta_e(ii)=eci(ii)-eci(state2opt)
       osc_strength(ii)=2.0/3.0*dble(delta_e(ii))*
      .(mu_s2s(ii,1)**2.0+mu_s2s(ii,2)**2.0+mu_s2s(ii,3)**2.0)
-     
+
       write(*,11) state2opt, ii, (delta_e(ii))*27.21139,
      .1.d+7/(delta_e(ii)*2.19474625d+5),
      .osc_strength(ii)
@@ -3841,16 +3841,16 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f9.1,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
+
       end subroutine ulresp_ESA_tda
-      
+
       subroutine sf_lresp_ESA(nci,iconf,maxconf,xla,yla,zla,mocia,
      .                                          xlb,ylb,zlb,mocib,
-     .                    noa,nva,nob,nvb,eci,Xci,nroot,xmolw,thr)  
+     .                    noa,nva,nob,nvb,eci,Xci,nroot,xmolw,thr)
       use commonresp
       use omp_lib
-      IMPLICIT NONE 
-      
+      IMPLICIT NONE
+
       integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
       integer ::io1,io2,iv1,iv2,iwrk,jwrk,nroot
       integer ::maxconf,mocia,noa,nva,mocib,nob,nvb
@@ -3858,29 +3858,29 @@ c B4 n iy ix
       integer, allocatable :: A_list(:,:)
       integer ::counter_A
       integer, allocatable :: B_list(:,:)
-      integer ::counter_B      
+      integer ::counter_B
       integer*8 ::lin8
-      
+
       real*8 ::xmolw
-      
+
       real*8 ::xla(mocia*(mocia+1)/2)
       real*8 ::yla(mocia*(mocia+1)/2)
       real*8 ::zla(mocia*(mocia+1)/2)
-      
+
       real*8 ::xlb(mocib*(mocib+1)/2)
       real*8 ::ylb(mocib*(mocib+1)/2)
       real*8 ::zlb(mocib*(mocib+1)/2)
-      
+
       real*8 ::mua(mocia*(mocia+1)/2,3)
-      real*8 ::mub(mocib*(mocib+1)/2,3)      
+      real*8 ::mub(mocib*(mocib+1)/2,3)
       real*4 ::Xci(nci,nroot),eci(nci)
       real*4 ::delta_e(nroot)
       real*8 ::thr,umerk(4,nroot)
-      
+
       real*8 ::mu_s2s(nroot,3),A1,B1,osc_strength(nroot)
-      
+
       integer ::ix,iy,iz
-      
+
       real*4 ::start_time,end_time
 
       !first spinflip state
@@ -3894,7 +3894,7 @@ c B4 n iy ix
       mub(:,1)=xlb(:)
       mub(:,2)=ylb(:)
       mub(:,3)=zlb(:)
-      
+
       write(*,*)
       write(*,*)'====================================================
      .=================='
@@ -3904,7 +3904,7 @@ c B4 n iy ix
      .=================='
       write(*,*)
       write(*,*)'Useful if the first SF state is the ground state'
-      write(*,*)      
+      write(*,*)
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
       !
@@ -3930,7 +3930,7 @@ c B4 n iy ix
       !Do i=1,counter_A
       !write(*,*)i,A_list(i,1:3)
       !enddo
-      
+
       counter_B=0
 !$omp parallel private(j,i,kk)
 !$omp&         reduction(+:counter_B)
@@ -3999,7 +3999,7 @@ c B4 n iy ix
       delta_e(ii)=eci(ii)-eci(state2opt)
       osc_strength(ii)=2.0/3.0*dble(delta_e(ii))*
      .(mu_s2s(ii,1)**2.0+mu_s2s(ii,2)**2.0+mu_s2s(ii,3)**2.0)
-     
+
       write(*,11) state2opt, ii, (delta_e(ii))*27.21139,
      .1.d+7/(delta_e(ii)*2.19474625d+5),
      .osc_strength(ii)
@@ -4017,5 +4017,524 @@ c B4 n iy ix
       write(*,*)
  11   format(i6,i9,f9.3,f9.1,f11.4)
  12   format(a1,i3,a17,i3,a1)
- 
+
       end subroutine sf_lresp_ESA
+
+      SUBROUTINE optrot(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv,
+     .                  xm,ym,zm,xmass)
+      use commonresp
+      use commonlogicals
+      use omp_lib
+      IMPLICIT NONE
+
+      integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
+      integer ::io1,io2,iv1,iv2,iwrk,jwrk
+      integer ::maxconf,moci,no,nv
+      integer ::iconf(maxconf,2)
+      integer*8 ::lin8
+
+      real*8 ::xl(moci*(moci+1)/2)
+      real*8 ::yl(moci*(moci+1)/2)
+      real*8 ::zl(moci*(moci+1)/2)
+
+      real*8 ::xm(moci*(moci+1)/2)
+      real*8 ::ym(moci*(moci+1)/2)
+      real*8 ::zm(moci*(moci+1)/2)
+      real*8 ::xmass,refindex,vorfaktor,reffaktor,refval
+      logical::da
+
+      real*4 ::apb(nci*(nci+1)/2)
+      real*4 ::amb(nci*(nci+1)/2)
+      real*4, allocatable ::inv_amb(:)
+      real*4, allocatable ::inv_resp(:)
+      real*8, allocatable ::XpY(:,:),XmY(:,:)
+      real*4 ::omega
+      real*4, allocatable ::freq(:)
+      real*8 ::alpha_xx,alpha_xy,alpha_xz
+      real*8 ::alpha_yy,alpha_yz
+      real*8 ::alpha_zz
+      character*1 ::uplo
+      integer ::info
+      integer, allocatable ::ipiv(:)
+      real*4, allocatable ::work (:)
+
+      integer ::ix,iy,iz
+
+      real*4 ::start_time,end_time
+
+      character(len=14):: dummy
+
+      logical :: file_exists
+
+      integer :: nlines
+
+      write(*,*)
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)'               Welcome in linear response sTD-DFT
+     . program'
+      write(*,*)'====================================================
+     .=================='
+
+      INQUIRE(FILE="wavelength", EXIST=file_exists)
+      if(file_exists==.false.)then
+      num_freq=12
+      allocate(freq(12))
+      freq(1)=45.56335/1900.00
+      freq(2)=45.56335/1500.00
+      freq(3)=45.56335/1064.00
+      freq(4)=45.56335/929.00
+      freq(5)=45.56335/794.00
+      freq(6)=45.56335/713.00
+      freq(7)=45.56335/632.80
+      freq(8)=45.56335/589.30
+      freq(9)=45.56335/579.00
+      freq(10)=45.56335/546.00
+      freq(11)=45.56335/436.00
+      freq(12)=45.56335/365.00
+      else
+      nlines = 0
+      open(unit=101,file='wavelength',form='formatted')
+      DO
+      READ (101,*, END=10)
+      nlines = nlines + 1
+      END DO
+   10 rewind (101)
+      num_freq=nlines
+      allocate(freq(num_freq))
+      Do i=1, num_freq
+      read(101,*)freq(i)
+      write(*,*)freq(i)
+      freq(i)=45.56335/freq(i)
+      enddo
+      close(101)
+      endif
+
+      write(*,*) 'Optical rotation alpha[grad*cm^3*g^-1*dm^-1]'
+      write(*,*) 'including Lorentz factor for common solvent (n=1.4)'
+      write(*,*) 'lambda [eV]       alpha       alpha(n=1.0) Phi
+     .         Phi(n=1.0)'
+      ! shift
+
+
+c refractive index of solvent
+      refindex=1.4d0
+      reffaktor=(refindex**2+2.0d0)/3.0d0
+
+      allocate(inv_amb(nci*(nci+1)/2))
+      inv_amb=amb
+      uplo='U'
+      allocate(ipiv(1:nci),work(1:nci))
+      call ssptrf(uplo,nci,inv_amb,ipiv,info)
+      call ssptri(uplo,nci,inv_amb,ipiv,work,info)
+      deallocate(ipiv,work)
+
+      allocate( XpY(nci,3))
+      allocate( XmY(nci,3))
+
+      Do ii=1, num_freq
+      omega=freq(ii)
+      XpY(:,:)=0.0
+      call cpu_time(start_time)
+      allocate(inv_resp(nci*(nci+1)/2))
+      inv_resp=apb-omega**2.0*inv_amb
+
+
+      uplo='U'
+      allocate(ipiv(1:nci),work(1:nci))
+      call ssptrf(uplo,nci,inv_resp,ipiv,info)
+      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
+      deallocate(ipiv,work)
+
+
+
+!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
+!$omp&                 reduction (+:XpY)
+!$omp do
+      Do i=1, nci
+        Do j=1, nci
+            jk=lin8(i,j)
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      XpY(i,1)=XpY(i,1)-2.0*xl(ij)*dble(inv_resp(jk))
+      XpY(i,2)=XpY(i,2)-2.0*yl(ij)*dble(inv_resp(jk))
+      XpY(i,3)=XpY(i,3)-2.0*zl(ij)*dble(inv_resp(jk))
+        enddo
+      enddo
+!$omp end do
+!$omp end parallel
+
+      !(X-Y)=omega*(A-B)^-1 (X+Y)
+      XmY=0.0
+!$omp parallel private(i,j,ij,ix)
+!$omp&                 reduction (+:XmY)
+!$omp do
+      Do i=1,nci
+        Do j=1,nci
+        ij=lin8(i,j)
+        Do ix=1,3
+        XmY(i,ix)=XmY(i,ix)+
+     .     dble(inv_amb(ij))*XpY(j,ix)!*dble(omega) !because beta=-Tr(G)/omega/3
+        enddo
+        enddo
+      enddo
+!$omp end do
+!$omp end parallel
+      if(nto)then
+      write(dummy,'(a,i0)')'1-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,1)*dble(omega)
+      close(14)
+      write(dummy,'(a,i0)')'2-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,2)*dble(omega)
+      close(14)
+      write(dummy,'(a,i0)')'3-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,3)*dble(omega)
+      close(14)
+      endif
+      alpha_xx=0.0
+      alpha_yy=0.0
+      alpha_zz=0.0
+!$omp parallel private(i,io,iv,idum1,idum2,ij)
+!$omp&                 reduction(+:alpha_xx,alpha_yy,alpha_zz)
+!$omp do
+      Do j=1, nci
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      alpha_xx=alpha_xx+(xm(ij)*XmY(j,1))*2.0 ! minus included
+      alpha_yy=alpha_yy+(ym(ij)*XmY(j,2))*2.0
+      alpha_zz=alpha_zz+(zm(ij)*XmY(j,3))*2.0
+      enddo
+!$omp end do
+!$omp end parallel
+      alpha_xx=alpha_xx/3.0
+      alpha_yy=alpha_yy/3.0
+      alpha_zz=alpha_zz/3.0
+      !G_xx= omega*-alpha_xx
+      !beta=-Tr(G)/omega/3=Tr(alpha)/3
+
+      vorfaktor=(38652./xmass)*(589.3/(45.56335/omega))**2
+      if(ii==8)then
+      refval=0
+      inquire(file='.ref',exist=da)
+      if(da)then
+      open(unit=33,file='.ref')
+      read(33,*)refval
+      close(33)
+      endif
+      write(*,142)45.56335/omega,omega*27.21139,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor*xmass/100.0,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor*xmass/100.0,
+     .refval,' Na D-line '
+      else
+      write(*,143)45.56335/omega,omega*27.21139,
+     .237.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor,
+     .237.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor*xmass/100.0,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor*xmass/100.0
+      endif
+
+      deallocate(inv_resp)
+      enddo
+      deallocate(XpY,XmY)
+      deallocate(inv_amb)
+111   format(A15,F20.6)
+1111  format(A22,2A20)
+2222  format(A2,3F20.6)
+3333  format(A16,F7.1,A1,F7.1,A1)
+ 142  format(f6.1,f6.2,5f12.2,a11)
+ 143  format(f6.1,f6.2,4f12.2)
+      end subroutine optrot
+
+      SUBROUTINE optrot_velo(nci,apb,amb,iconf,maxconf,xv,yv,zv,moci,
+     .                  no,nv,
+     .                  xm,ym,zm,xmass)
+      use commonresp
+      use commonlogicals
+      use omp_lib
+      IMPLICIT NONE
+
+      integer ::i,j,k,ii,jj,kk,ij,jk,ab,io,iv,idum1,idum2,nci
+      integer ::io1,io2,iv1,iv2,iwrk,jwrk
+      integer ::maxconf,moci,no,nv
+      integer ::iconf(maxconf,2)
+      integer*8 ::lin8
+
+      real*8 ::xv(moci*(moci+1)/2)
+      real*8 ::yv(moci*(moci+1)/2)
+      real*8 ::zv(moci*(moci+1)/2)
+
+      real*8 ::xvelo(moci*(moci+1)/2)
+      real*8 ::yvelo(moci*(moci+1)/2)
+      real*8 ::zvelo(moci*(moci+1)/2)
+
+      real*8 ::xm(moci*(moci+1)/2)
+      real*8 ::ym(moci*(moci+1)/2)
+      real*8 ::zm(moci*(moci+1)/2)
+      real*8 ::xmass,refindex,vorfaktor,reffaktor,refval
+      logical::da
+
+      real*4 ::apb(nci*(nci+1)/2)
+      real*4 ::amb(nci*(nci+1)/2)
+      real*4, allocatable ::inv_amb(:)
+      real*4, allocatable ::inv_resp(:)
+      real*8, allocatable ::XpY(:,:),XmY(:,:)
+      real*4 ::omega
+      real*4, allocatable ::freq(:)
+      real*8 ::alpha_xx,alpha_xy,alpha_xz
+      real*8 ::alpha_yy,alpha_yz
+      real*8 ::alpha_zz
+      character*1 ::uplo
+      integer ::info
+      integer, allocatable ::ipiv(:)
+      real*4, allocatable ::work (:)
+
+      integer ::ix,iy,iz
+
+      real*4 ::start_time,end_time
+
+      character(len=14):: dummy
+
+      logical :: file_exists
+
+      integer :: nlines
+
+      write(*,*)
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)'               Welcome in linear response sTD-DFT
+     . program'
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)'VELOCITY REPRESENTATION (ORIGIN INDEPENDENT)'
+      INQUIRE(FILE="wavelength", EXIST=file_exists)
+      if(file_exists==.false.)then
+      num_freq=12
+      allocate(freq(12))
+      freq(1)=45.56335/1900.00
+      freq(2)=45.56335/1500.00
+      freq(3)=45.56335/1064.00
+      freq(4)=45.56335/929.00
+      freq(5)=45.56335/794.00
+      freq(6)=45.56335/713.00
+      freq(7)=45.56335/632.80
+      freq(8)=45.56335/589.30
+      freq(9)=45.56335/579.00
+      freq(10)=45.56335/546.00
+      freq(11)=45.56335/436.00
+      freq(12)=45.56335/365.00
+      else
+      nlines = 0
+      open(unit=101,file='wavelength',form='formatted')
+      DO
+      READ (101,*, END=10)
+      nlines = nlines + 1
+      END DO
+   10 rewind (101)
+      num_freq=nlines
+      allocate(freq(num_freq))
+      Do i=1, num_freq
+      read(101,*)freq(i)
+      write(*,*)freq(i)
+      freq(i)=45.56335/freq(i)
+      enddo
+      close(101)
+      endif
+      write(*,*) 'Optical rotation alpha[grad*cm^3*g^-1*dm^-1]'
+      write(*,*) 'including Lorentz factor for common solvent (n=1.4)'
+      write(*,*) 'lambda [eV]       alpha       alpha(n=1.0) Phi
+     .         Phi(n=1.0)'
+
+c refractive index of solvent
+      refindex=1.4d0
+      reffaktor=(refindex**2+2.0d0)/3.0d0
+
+      allocate(inv_amb(nci*(nci+1)/2))
+      inv_amb=amb
+      uplo='U'
+      allocate(ipiv(1:nci),work(1:nci))
+      call ssptrf(uplo,nci,inv_amb,ipiv,info)
+      call ssptri(uplo,nci,inv_amb,ipiv,work,info)
+      deallocate(ipiv,work)
+
+      ! mu_v= -(A-B)**(-1)*nabla
+
+      xvelo=0.0
+      yvelo=0.0
+      zvelo=0.0
+!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij,ab)
+!$omp&                 reduction (+:xvelo,yvelo,zvelo)
+!$omp do
+      Do i=1, nci
+            io=iconf(i,1)
+            iv=iconf(i,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ab=idum2+idum1*(idum1-1)/2
+        Do j=1, nci
+            jk=lin8(i,j)
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      xvelo(ab)=xvelo(ab)+xv(ij)*dble(inv_amb(jk))
+      yvelo(ab)=yvelo(ab)+yv(ij)*dble(inv_amb(jk))
+      zvelo(ab)=zvelo(ab)+zv(ij)*dble(inv_amb(jk))
+        enddo
+      enddo
+!$omp end do
+!$omp end parallel
+
+      allocate( XpY(nci,3))
+      allocate( XmY(nci,3))
+
+      Do ii=1, num_freq
+      omega=freq(ii)
+      XpY(:,:)=0.0
+      call cpu_time(start_time)
+      allocate(inv_resp(nci*(nci+1)/2))
+      inv_resp=apb-omega**2.0*inv_amb
+
+
+      uplo='U'
+      allocate(ipiv(1:nci),work(1:nci))
+      call ssptrf(uplo,nci,inv_resp,ipiv,info)
+      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
+      deallocate(ipiv,work)
+
+
+
+!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
+!$omp&                 reduction (+:XpY)
+!$omp do
+      Do i=1, nci
+        Do j=1, nci
+            jk=lin8(i,j)
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      XpY(i,1)=XpY(i,1)-2.0*xvelo(ij)*dble(inv_resp(jk))
+      XpY(i,2)=XpY(i,2)-2.0*yvelo(ij)*dble(inv_resp(jk))
+      XpY(i,3)=XpY(i,3)-2.0*zvelo(ij)*dble(inv_resp(jk))
+        enddo
+      enddo
+!$omp end do
+!$omp end parallel
+
+      !(X-Y)=omega*(A-B)^-1 (X+Y)
+      XmY=0.0
+!$omp parallel private(i,j,ij,ix)
+!$omp&                 reduction (+:XmY)
+!$omp do
+      Do i=1,nci
+        Do j=1,nci
+        ij=lin8(i,j)
+        Do ix=1,3
+        XmY(i,ix)=XmY(i,ix)+
+     .     dble(inv_amb(ij))*XpY(j,ix)!*dble(omega) because beta=-Tr(G)/omega/3
+        enddo
+        enddo
+      enddo
+!$omp end do
+!$omp end parallel
+      if(nto)then
+      write(dummy,'(a,i0)')'1-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,1)*dble(omega)
+      close(14)
+      write(dummy,'(a,i0)')'2-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,2)*dble(omega)
+      close(14)
+      write(dummy,'(a,i0)')'3-',ii
+      open(unit=14,file=dummy)
+      write(14,*)XmY(:,3)*dble(omega)
+      close(14)
+      endif
+      alpha_xx=0.0
+      alpha_yy=0.0
+      alpha_zz=0.0
+!$omp parallel private(i,io,iv,idum1,idum2,ij)
+!$omp&                 reduction(+:alpha_xx,alpha_yy,alpha_zz)
+!$omp do
+      Do j=1, nci
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      alpha_xx=alpha_xx+(xm(ij)*XmY(j,1))*2.0 ! minus included
+      alpha_yy=alpha_yy+(ym(ij)*XmY(j,2))*2.0
+      alpha_zz=alpha_zz+(zm(ij)*XmY(j,3))*2.0
+      enddo
+!$omp end do
+!$omp end parallel
+      alpha_xx=alpha_xx/3.0
+      alpha_yy=alpha_yy/3.0
+      alpha_zz=alpha_zz/3.0
+      !G_xx= omega*-alpha_xx
+      !beta=-Tr(G)/omega/3=Tr(alpha)/3
+
+      vorfaktor=(38652./xmass)*(589.3/(45.56335/omega))**2
+      if(ii==8)then
+      refval=0
+      inquire(file='.ref',exist=da)
+      if(da)then
+      open(unit=33,file='.ref')
+      read(33,*)refval
+      close(33)
+      endif
+      write(*,142)45.56335/omega,omega*27.21139,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor*xmass/100.0,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor*xmass/100.0,
+     .refval,' Na D-line '
+      else
+      write(*,143)45.56335/omega,omega*27.21139,
+     .237.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor,
+     .237.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*reffaktor*vorfaktor*xmass/100.0,
+     .235.722*(alpha_xx+alpha_yy+alpha_zz)
+     ./64604.8*(2.0*137.036/3.0)*vorfaktor*xmass/100.0
+      endif
+
+      deallocate(inv_resp)
+      enddo
+      deallocate(XpY,XmY)
+      deallocate(inv_amb)
+111   format(A15,F20.6)
+1111  format(A22,2A20)
+2222  format(A2,3F20.6)
+3333  format(A16,F7.1,A1,F7.1,A1)
+ 142  format(f6.1,f6.2,5f12.2,a11)
+ 143  format(f6.1,f6.2,4f12.2)
+      end subroutine optrot_velo
