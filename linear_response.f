@@ -4078,20 +4078,9 @@ c B4 n iy ix
 
       INQUIRE(FILE="wavelength", EXIST=file_exists)
       if(file_exists==.false.)then
-      num_freq=12
-      allocate(freq(12))
-      freq(1)=45.56335/1900.00
-      freq(2)=45.56335/1500.00
-      freq(3)=45.56335/1064.00
-      freq(4)=45.56335/929.00
-      freq(5)=45.56335/794.00
-      freq(6)=45.56335/713.00
-      freq(7)=45.56335/632.80
-      freq(8)=45.56335/589.30
-      freq(9)=45.56335/579.00
-      freq(10)=45.56335/546.00
-      freq(11)=45.56335/436.00
-      freq(12)=45.56335/365.00
+      num_freq=1
+      allocate(freq(1))
+      freq(1)=45.56335/589.30
       else
       nlines = 0
       open(unit=101,file='wavelength',form='formatted')
@@ -4327,20 +4316,9 @@ c refractive index of solvent
       write(*,*)'VELOCITY REPRESENTATION (ORIGIN INDEPENDENT)'
       INQUIRE(FILE="wavelength", EXIST=file_exists)
       if(file_exists==.false.)then
-      num_freq=12
-      allocate(freq(12))
-      freq(1)=45.56335/1900.00
-      freq(2)=45.56335/1500.00
-      freq(3)=45.56335/1064.00
-      freq(4)=45.56335/929.00
-      freq(5)=45.56335/794.00
-      freq(6)=45.56335/713.00
-      freq(7)=45.56335/632.80
-      freq(8)=45.56335/589.30
-      freq(9)=45.56335/579.00
-      freq(10)=45.56335/546.00
-      freq(11)=45.56335/436.00
-      freq(12)=45.56335/365.00
+      num_freq=1
+      allocate(freq(1))
+      freq(1)=45.56335/589.30
       else
       nlines = 0
       open(unit=101,file='wavelength',form='formatted')
