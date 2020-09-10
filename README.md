@@ -92,6 +92,9 @@ See the manual on the [release page](https://github.com/grimme-lab/stda/releases
 - M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-dependent density functional theory (sTD-DFT) framework: Evaluation of excited-state absorption spectra, *J. Chem. Phys.*, **2019**, 150, 094112.
   DOI: [10.1063/1.5080199](https://doi.org/10.1063/1.5080199)
 
+- M. de Wergifosse, J. Seibert, S. Grimme, Simplified time-dependent density functional theory (sTD-DFT) for molecular optical rotation, *J. Chem. Phys.*, **2020**, 153, 084116.
+  DOI: [10.1063/5.0020543](https://doi.org/10.1063/5.0020543)
+
 ## License
 
 `stda` is free software: you can redistribute it and/or modify it under
