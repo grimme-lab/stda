@@ -283,7 +283,7 @@
             write(*,*)'Occup= ',real(iocc(j))
             do k=1,nbf
              write(*,'(i6)',advance='no')k
-             write(*,'(f12.8)')coeff(k,j)
+             write(*,'(f20.10)')coeff(k,j)
             enddo
 
            enddo
