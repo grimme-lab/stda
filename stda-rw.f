@@ -1699,11 +1699,18 @@ c if sum > threshold include it
            ij=lin(i,i)
            q2(1:ncent)=qia(1:ncent,iwrk)
            ek=sdot(ncent,q1,1,q2,1)
+           if(aresp.or.resp.or.optrota) then
+           ambsqr(ij)=de-ak*ek ! diagonal element of (A-B)
+           else
            ambsqr(ij)=sqrt(de-ak*ek) ! diagonal element of (A-B)^0.5
+           endif
            apb(ij)=de+ak*ek       ! diagonal element of A+B
         enddo ! i
 !$omp end do
 !$omp end parallel
+        open(unit=53,file='amb',form='unformatted',status='replace')
+        write(53) ambsqr
+        close(53)
       else
         ij=0
         ! for now ambsqr=A+B and apb=A-B, since we need to take the sqrt of A-B (but want to save memory)

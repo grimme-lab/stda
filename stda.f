@@ -1700,11 +1700,20 @@ c if sum > threshold include it
            de=real(ed(i))
            ij=lin(i,i)
            ek=sdot(ncent,qk,1,qia(1,iwrk),1)
+           if(aresp.or.resp.or.optrota) then
+           ambsqr(ij)=de-ak*ek ! diagonal element of (A-B)
+           else
            ambsqr(ij)=sqrt(de-ak*ek) ! diagonal element of (A-B)^0.5
+           endif
            apb(ij)=de+ak*ek       ! diagonal element of A+B
         enddo ! i
 !$omp end do
 !$omp end parallel
+
+        open(unit=53,file='amb',form='unformatted',status='replace')
+        write(53) ambsqr
+        close(53)
+
       else
         allocate(qj(ncent), stat=ierr)
         ij=0
@@ -1747,6 +1756,8 @@ c if sum > threshold include it
 
 !        call prmat4(6,apb,nci,0,'A-B')
 !        call prmat4(6,ambsqr,nci,0,'A+B')
+
+
       if(aresp.or.resp.or.optrota) then
         write(*,*) ' calculating (A-B)^0.5 not necessary...'
         open(unit=53,file='amb',form='unformatted',status='replace')
@@ -1770,9 +1781,10 @@ c if sum > threshold include it
         close(52,status='delete')
         close(53)
       endif
-
         deallocate(qj)
       endif ! GGA/hybrid case
+
+
       deallocate(qk)
       return
 
