@@ -1,6 +1,6 @@
 ! This file is part of stda.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2020 Stefan Grimme
 !
 ! stda is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,7 @@
 ! along with stda.  If not, see <https://www.gnu.org/licenses/>.
 !
 
-! written by Marc de Wegifosse 2017-2019
+! written by Marc de Wegifosse 2017-2020
 
 
       SUBROUTINE lresp(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,no,nv)
@@ -36,17 +36,20 @@
 
       real*8 ::mu(moci*(moci+1)/2,3)
 
+      real*4 ::mu_x(nci)
+      real*4 ::mu_y(nci)
+      real*4 ::mu_z(nci)
 
       real*4 ::apb(nci*(nci+1)/2)
       real*4 ::amb(nci*(nci+1)/2)
       real*4, allocatable ::inv_amb(:)
       real*4, allocatable ::inv_resp(:)
-      real*8, allocatable ::XpY(:,:)
+      real*4, allocatable ::XpY(:,:)
       real*4 ::omega
       real*4 ::freq(num_freq+1)
-      real*8 ::alpha_xx,alpha_xy,alpha_xz
-      real*8 ::alpha_yy,alpha_yz
-      real*8 ::alpha_zz
+      real*4 ::alpha_xx,alpha_xy,alpha_xz
+      real*4 ::alpha_yy,alpha_yz
+      real*4 ::alpha_zz
       character*1 ::uplo
       integer ::info
       integer, allocatable ::ipiv(:)
@@ -89,6 +92,24 @@
       deallocate(ipiv,work)
 
       allocate( XpY(nci,3))
+      ! the dipole moment matrix mu_ai
+      mu_x=0.0
+      mu_y=0.0
+      mu_z=0.0
+!$omp parallel private(j,io,iv,idum1,idum2,ij)
+!$omp do
+              Do j=1, nci
+                  io=iconf(j,1)
+                  iv=iconf(j,2)
+                  idum1=max(io,iv)
+                  idum2=min(io,iv)
+                  ij=idum2+idum1*(idum1-1)/2
+            mu_x(j)=-2.0*xl(ij)
+            mu_y(j)=-2.0*yl(ij)
+            mu_z(j)=-2.0*zl(ij)
+              enddo
+!$omp end do
+!$omp end parallel
 
       Do ii=1, num_freq+1
       omega=freq(ii)
@@ -97,33 +118,15 @@
       allocate(inv_resp(nci*(nci+1)/2))
       inv_resp=apb-omega**2.0*inv_amb
 
-
       uplo='U'
-      allocate(ipiv(1:nci),work(1:nci))
+      XpY(:,1)=mu_x(:)
+      XpY(:,2)=mu_y(:)
+      XpY(:,3)=mu_z(:)
+      allocate(ipiv(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
-      deallocate(ipiv,work)
+      call ssptrs(uplo,nci,3,inv_resp,ipiv,XpY,nci,info)
+      deallocate(ipiv)
 
-
-
-!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
-!$omp&                 reduction (+:XpY)
-!$omp do
-      Do i=1, nci
-        Do j=1, nci
-            jk=lin8(i,j)
-            io=iconf(j,1)
-            iv=iconf(j,2)
-            idum1=max(io,iv)
-            idum2=min(io,iv)
-            ij=idum2+idum1*(idum1-1)/2
-      XpY(i,1)=XpY(i,1)-2.0*xl(ij)*dble(inv_resp(jk))
-      XpY(i,2)=XpY(i,2)-2.0*yl(ij)*dble(inv_resp(jk))
-      XpY(i,3)=XpY(i,3)-2.0*zl(ij)*dble(inv_resp(jk))
-        enddo
-      enddo
-!$omp end do
-!$omp end parallel
       alpha_xx=0.0
       alpha_xy=0.0
       alpha_xz=0.0
@@ -194,6 +197,10 @@
 
       real*8 ::mu(moci*(moci+1)/2,3)
 
+      real*4 ::mu_x(nci)
+      real*4 ::mu_y(nci)
+      real*4 ::mu_z(nci)
+      real*4 ::XpY_int(nci,3)
 
       real*4 ::apb(nci*(nci+1)/2)
       real*4 ::amb(nci*(nci+1)/2)
@@ -263,6 +270,25 @@
       X(:,:,:,:)=0.0
       Y(:,:,:,:)=0.0
 
+      ! the dipole moment matrix mu_ai
+      mu_x=0.0
+      mu_y=0.0
+      mu_z=0.0
+!$omp parallel private(j,io,iv,idum1,idum2,ij)
+!$omp do
+              Do j=1, nci
+                  io=iconf(j,1)
+                  iv=iconf(j,2)
+                  idum1=max(io,iv)
+                  idum2=min(io,iv)
+                  ij=idum2+idum1*(idum1-1)/2
+            mu_x(j)=-2.0*xl(ij)
+            mu_y(j)=-2.0*yl(ij)
+            mu_z(j)=-2.0*zl(ij)
+              enddo
+!$omp end do
+!$omp end parallel
+
       Do ii=1, num_freq+1
       Do jj=1, 2 !2*omega
       omega=freq(ii)*jj
@@ -273,31 +299,18 @@
 
 
       uplo='U'
-      allocate(ipiv(1:nci),work(1:nci))
+      XpY_int(:,1)=mu_x(:)
+      XpY_int(:,2)=mu_y(:)
+      XpY_int(:,3)=mu_z(:)
+      allocate(ipiv(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
-      deallocate(ipiv,work)
+      call ssptrs(uplo,nci,3,inv_resp,ipiv,XpY_int,nci,info)
+      deallocate(ipiv)
 
+      XpY(:,ii,jj,1)=dble(XpY_int(:,1))
+      XpY(:,ii,jj,2)=dble(XpY_int(:,2))
+      XpY(:,ii,jj,3)=dble(XpY_int(:,3))
 
-
-!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
-!$omp&                 reduction (+:XpY)
-!$omp do
-      Do i=1, nci
-        Do j=1, nci
-            jk=lin8(i,j)
-            io=iconf(j,1)
-            iv=iconf(j,2)
-            idum1=max(io,iv)
-            idum2=min(io,iv)
-            ij=idum2+idum1*(idum1-1)/2
-      XpY(i,ii,jj,1)=XpY(i,ii,jj,1)-2.0*xl(ij)*dble(inv_resp(jk))
-      XpY(i,ii,jj,2)=XpY(i,ii,jj,2)-2.0*yl(ij)*dble(inv_resp(jk))
-      XpY(i,ii,jj,3)=XpY(i,ii,jj,3)-2.0*zl(ij)*dble(inv_resp(jk))
-        enddo
-      enddo
-!$omp end do
-!$omp end parallel
       if(jj==1)then !print alpha only for omega and not -2*omega
       alpha_xx=0.0
       alpha_xy=0.0
@@ -1675,6 +1688,11 @@ c     Body of the function
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
 
+      real*4 ::mu_x(nci)
+      real*4 ::mu_y(nci)
+      real*4 ::mu_z(nci)
+      real*4 ::XpY_int(nci,3)
+
       real*8 ::mu(moci*(moci+1)/2,3)
       real*4 ::omega
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
@@ -1730,6 +1748,25 @@ c     Body of the function
       allocate( X(nci,3),
      .          Y(nci,3))
 
+      ! the dipole moment matrix mu_ai
+      mu_x=0.0
+      mu_y=0.0
+      mu_z=0.0
+!$omp parallel private(j,io,iv,idum1,idum2,ij)
+!$omp do
+             Do j=1, nci
+                 io=iconf(j,1)
+                 iv=iconf(j,2)
+                 idum1=max(io,iv)
+                 idum2=min(io,iv)
+                 ij=idum2+idum1*(idum1-1)/2
+           mu_x(j)=-2.0*xl(ij)
+           mu_y(j)=-2.0*yl(ij)
+           mu_z(j)=-2.0*zl(ij)
+             enddo
+!$omp end do
+!$omp end parallel
+
       Do ii=1, num_trans
       XpY(:,:)=0.0
       XmY(:,:)=0.0
@@ -1742,31 +1779,17 @@ c     Body of the function
 
 
       uplo='U'
-      allocate(ipiv(1:nci),work(1:nci))
+      XpY_int(:,1)=mu_x(:)
+      XpY_int(:,2)=mu_y(:)
+      XpY_int(:,3)=mu_z(:)
+      allocate(ipiv(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
-      deallocate(ipiv,work)
+      call ssptrs(uplo,nci,3,inv_resp,ipiv,XpY_int,nci,info)
+      deallocate(ipiv)
 
-
-
-!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
-!$omp&                 reduction (+:XpY)
-!$omp do
-      Do i=1, nci
-        Do j=1, nci
-            jk=lin8(i,j)
-            io=iconf(j,1)
-            iv=iconf(j,2)
-            idum1=max(io,iv)
-            idum2=min(io,iv)
-            ij=idum2+idum1*(idum1-1)/2
-      XpY(i,1)=XpY(i,1)-2.0*xl(ij)*dble(inv_resp(jk))
-      XpY(i,2)=XpY(i,2)-2.0*yl(ij)*dble(inv_resp(jk))
-      XpY(i,3)=XpY(i,3)-2.0*zl(ij)*dble(inv_resp(jk))
-        enddo
-      enddo
-!$omp end do
-!$omp end parallel
+      XpY(:,1)=dble(XpY_int(:,1))
+      XpY(:,2)=dble(XpY_int(:,2))
+      XpY(:,3)=dble(XpY_int(:,3))
 
 
 !       alpha_xx=0.0
@@ -4037,6 +4060,10 @@ c B4 n iy ix
       real*8 ::yl(moci*(moci+1)/2)
       real*8 ::zl(moci*(moci+1)/2)
 
+      real*4 ::mu_x(nci)
+      real*4 ::mu_y(nci)
+      real*4 ::mu_z(nci)
+
       real*8 ::xm(moci*(moci+1)/2)
       real*8 ::ym(moci*(moci+1)/2)
       real*8 ::zm(moci*(moci+1)/2)
@@ -4047,12 +4074,12 @@ c B4 n iy ix
       real*4 ::amb(nci*(nci+1)/2)
       real*4, allocatable ::inv_amb(:)
       real*4, allocatable ::inv_resp(:)
-      real*8, allocatable ::XpY(:,:),XmY(:,:)
+      real*4, allocatable ::XpY(:,:),XmY(:,:)
       real*4 ::omega
       real*4, allocatable ::freq(:)
-      real*8 ::alpha_xx,alpha_xy,alpha_xz
-      real*8 ::alpha_yy,alpha_yz
-      real*8 ::alpha_zz
+      real*4 ::alpha_xx,alpha_xy,alpha_xz
+      real*4 ::alpha_yy,alpha_yz
+      real*4 ::alpha_zz
       character*1 ::uplo
       integer ::info
       integer, allocatable ::ipiv(:)
@@ -4120,6 +4147,24 @@ c refractive index of solvent
 
       allocate( XpY(nci,3))
       allocate( XmY(nci,3))
+      ! the dipole moment matrix mu_ai
+      mu_x=0.0
+      mu_y=0.0
+      mu_z=0.0
+!$omp parallel private(j,io,iv,idum1,idum2,ij)
+!$omp do
+              Do j=1, nci
+                  io=iconf(j,1)
+                  iv=iconf(j,2)
+                  idum1=max(io,iv)
+                  idum2=min(io,iv)
+                  ij=idum2+idum1*(idum1-1)/2
+            mu_x(j)=-2.0*xl(ij)
+            mu_y(j)=-2.0*yl(ij)
+            mu_z(j)=-2.0*zl(ij)
+              enddo
+!$omp end do
+!$omp end parallel
 
       Do ii=1, num_freq
       omega=freq(ii)
@@ -4128,33 +4173,14 @@ c refractive index of solvent
       allocate(inv_resp(nci*(nci+1)/2))
       inv_resp=apb-omega**2.0*inv_amb
 
-
       uplo='U'
-      allocate(ipiv(1:nci),work(1:nci))
+      XpY(:,1)=mu_x(:)
+      XpY(:,2)=mu_y(:)
+      XpY(:,3)=mu_z(:)
+      allocate(ipiv(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
-      deallocate(ipiv,work)
-
-
-
-!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
-!$omp&                 reduction (+:XpY)
-!$omp do
-      Do i=1, nci
-        Do j=1, nci
-            jk=lin8(i,j)
-            io=iconf(j,1)
-            iv=iconf(j,2)
-            idum1=max(io,iv)
-            idum2=min(io,iv)
-            ij=idum2+idum1*(idum1-1)/2
-      XpY(i,1)=XpY(i,1)-2.0*xl(ij)*dble(inv_resp(jk))
-      XpY(i,2)=XpY(i,2)-2.0*yl(ij)*dble(inv_resp(jk))
-      XpY(i,3)=XpY(i,3)-2.0*zl(ij)*dble(inv_resp(jk))
-        enddo
-      enddo
-!$omp end do
-!$omp end parallel
+      call ssptrs(uplo,nci,3,inv_resp,ipiv,XpY,nci,info)
+      deallocate(ipiv)
 
       !(X-Y)=omega*(A-B)^-1 (X+Y)
       XmY=0.0
@@ -4166,7 +4192,7 @@ c refractive index of solvent
         ij=lin8(i,j)
         Do ix=1,3
         XmY(i,ix)=XmY(i,ix)+
-     .     dble(inv_amb(ij))*XpY(j,ix)!*dble(omega) !because beta=-Tr(G)/omega/3
+     .     inv_amb(ij)*XpY(j,ix)!*dble(omega) !because beta=-Tr(G)/omega/3
         enddo
         enddo
       enddo
@@ -4175,15 +4201,15 @@ c refractive index of solvent
       if(nto)then
       write(dummy,'(a,i0)')'1-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,1)*dble(omega)
+      write(14,*)XmY(:,1)*omega
       close(14)
       write(dummy,'(a,i0)')'2-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,2)*dble(omega)
+      write(14,*)XmY(:,2)*omega
       close(14)
       write(dummy,'(a,i0)')'3-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,3)*dble(omega)
+      write(14,*)XmY(:,3)*omega
       close(14)
       endif
       alpha_xx=0.0
@@ -4275,6 +4301,10 @@ c refractive index of solvent
       real*8 ::yvelo(moci*(moci+1)/2)
       real*8 ::zvelo(moci*(moci+1)/2)
 
+      real*4 ::mu_x(nci)
+      real*4 ::mu_y(nci)
+      real*4 ::mu_z(nci)
+
       real*8 ::xm(moci*(moci+1)/2)
       real*8 ::ym(moci*(moci+1)/2)
       real*8 ::zm(moci*(moci+1)/2)
@@ -4285,12 +4315,12 @@ c refractive index of solvent
       real*4 ::amb(nci*(nci+1)/2)
       real*4, allocatable ::inv_amb(:)
       real*4, allocatable ::inv_resp(:)
-      real*8, allocatable ::XpY(:,:),XmY(:,:)
+      real*4, allocatable ::XpY(:,:),XmY(:,:)
       real*4 ::omega
       real*4, allocatable ::freq(:)
-      real*8 ::alpha_xx,alpha_xy,alpha_xz
-      real*8 ::alpha_yy,alpha_yz
-      real*8 ::alpha_zz
+      real*4 ::alpha_xx,alpha_xy,alpha_xz
+      real*4 ::alpha_yy,alpha_yz
+      real*4 ::alpha_zz
       character*1 ::uplo
       integer ::info
       integer, allocatable ::ipiv(:)
@@ -4382,6 +4412,25 @@ c refractive index of solvent
 !$omp end do
 !$omp end parallel
 
+! the dipole moment matrix mu_ai
+      mu_x=0.0
+      mu_y=0.0
+      mu_z=0.0
+!$omp parallel private(j,io,iv,idum1,idum2,ij)
+!$omp do
+        Do j=1, nci
+            io=iconf(j,1)
+            iv=iconf(j,2)
+            idum1=max(io,iv)
+            idum2=min(io,iv)
+            ij=idum2+idum1*(idum1-1)/2
+      mu_x(j)=-2.0*xvelo(ij)
+      mu_y(j)=-2.0*yvelo(ij)
+      mu_z(j)=-2.0*zvelo(ij)
+        enddo
+!$omp end do
+!$omp end parallel
+
       allocate( XpY(nci,3))
       allocate( XmY(nci,3))
 
@@ -4394,31 +4443,13 @@ c refractive index of solvent
 
 
       uplo='U'
-      allocate(ipiv(1:nci),work(1:nci))
+      XpY(:,1)=mu_x(:)
+      XpY(:,2)=mu_y(:)
+      XpY(:,3)=mu_z(:)
+      allocate(ipiv(1:nci))
       call ssptrf(uplo,nci,inv_resp,ipiv,info)
-      call ssptri(uplo,nci,inv_resp,ipiv,work,info)
-      deallocate(ipiv,work)
-
-
-
-!$omp parallel private(i,j,jk,io,iv,idum1,idum2,ij)
-!$omp&                 reduction (+:XpY)
-!$omp do
-      Do i=1, nci
-        Do j=1, nci
-            jk=lin8(i,j)
-            io=iconf(j,1)
-            iv=iconf(j,2)
-            idum1=max(io,iv)
-            idum2=min(io,iv)
-            ij=idum2+idum1*(idum1-1)/2
-      XpY(i,1)=XpY(i,1)-2.0*xvelo(ij)*dble(inv_resp(jk))
-      XpY(i,2)=XpY(i,2)-2.0*yvelo(ij)*dble(inv_resp(jk))
-      XpY(i,3)=XpY(i,3)-2.0*zvelo(ij)*dble(inv_resp(jk))
-        enddo
-      enddo
-!$omp end do
-!$omp end parallel
+      call ssptrs(uplo,nci,3,inv_resp,ipiv,XpY,nci,info)
+      deallocate(ipiv)
 
       !(X-Y)=omega*(A-B)^-1 (X+Y)
       XmY=0.0
@@ -4430,7 +4461,7 @@ c refractive index of solvent
         ij=lin8(i,j)
         Do ix=1,3
         XmY(i,ix)=XmY(i,ix)+
-     .     dble(inv_amb(ij))*XpY(j,ix)!*dble(omega) because beta=-Tr(G)/omega/3
+     .     inv_amb(ij)*XpY(j,ix)!*dble(omega) because beta=-Tr(G)/omega/3
         enddo
         enddo
       enddo
@@ -4439,15 +4470,15 @@ c refractive index of solvent
       if(nto)then
       write(dummy,'(a,i0)')'1-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,1)*dble(omega)
+      write(14,*)XmY(:,1)*omega
       close(14)
       write(dummy,'(a,i0)')'2-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,2)*dble(omega)
+      write(14,*)XmY(:,2)*omega
       close(14)
       write(dummy,'(a,i0)')'3-',ii
       open(unit=14,file=dummy)
-      write(14,*)XmY(:,3)*dble(omega)
+      write(14,*)XmY(:,3)*omega
       close(14)
       endif
       alpha_xx=0.0
