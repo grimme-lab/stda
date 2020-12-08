@@ -284,71 +284,16 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       open(unit=31,file='xlint',form='unformatted',status='old')
       read(31) help
-
-!       dipole(1)=0.0
-!       do k=1,moci
-!       Do i=1,nao
-!       jwrk=(k-1)*nao+i
-!       do j=1,nao
-!       iwrk=(k-1)*nao+j
-!       dipole(1)=dipole(1)-ca(jwrk)*ca(iwrk)*help(lin(i,j))
-!       enddo
-!       enddo
-!       enddo
-!       write(*,*)'mu_x',dipole(1),'electronic, not
-!      .shifted to the centre of mass'
-
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,xl)
-
-      !dipole_mo(1)=0.0
-      !Do i=1,moci
-      !dipole_mo(1)=dipole_mo(1)-xl(lin(i,i))
-      !enddo
-      !write(*,*)dipole_mo(1)
-
-
       close(31,status='delete')
       open(unit=32,file='ylint',form='unformatted',status='old')
       read(32) help
-
-!       dipole(2)=0.0
-!       do k=1,moci
-!       Do i=1,nao
-!       jwrk=(k-1)*nao+i
-!       do j=1,nao
-!       iwrk=(k-1)*nao+j
-!       dipole(2)=dipole(2)-ca(jwrk)*ca(iwrk)*help(lin(i,j))
-!       enddo
-!       enddo
-!       enddo
-!       write(*,*)'mu_y',dipole(2)
-
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,yl)
-
-      !dipole_mo(2)=0.0
-      !Do i=1,moci
-      !dipole_mo(2)=dipole_mo(2)-yl(lin(i,i))
-      !enddo
-      !write(*,*)dipole_mo(2)
-
       close(32,status='delete')
       open(unit=33,file='zlint',form='unformatted',status='old')
       read(33) help
-
-!       dipole(3)=0.0
-!       do k=1,moci
-!       Do i=1,nao
-!       jwrk=(k-1)*nao+i
-!       do j=1,nao
-!       iwrk=(k-1)*nao+j
-!       dipole(3)=dipole(3)-ca(jwrk)*ca(iwrk)*help(lin(i,j))
-!       enddo
-!       enddo
-!       enddo
-!       write(*,*)'mu_z',dipole(3)
-
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zl)
 
