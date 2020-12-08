@@ -296,13 +296,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       read(33) help
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zl)
-
-      !dipole_mo(3)=0.0
-      !Do i=1,moci
-      !dipole_mo(3)=dipole_mo(3)-zl(lin(i,i))
-      !enddo
-      !write(*,*)dipole_mo(3)
-
       close(33,status='delete')
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
