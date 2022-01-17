@@ -761,7 +761,7 @@ c Linear Response functions *
       read(53) amb
       close(53,status='delete')
 
-      call lresp(nci,apb,ambsqr,iconf,maxconf,xl,yl,zl,moci,
+      call lresp(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv)
 
       call cpu_time(end_time)
