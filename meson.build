@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with xtb4stda.  If not, see <https://www.gnu.org/licenses/>.
 
+# modified to include options for Windows with Intel Fortran only (Shoubhik Maiti, April 2022)
+
 project('stda', 'fortran',
         version: '1.6.1',
         license: 'LGPL3',
