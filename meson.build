@@ -31,14 +31,12 @@ fc = meson.get_compiler('fortran')
 if fc.get_id() == 'gcc'
   add_project_arguments('-ffree-line-length-none', language: 'fortran')
   add_project_arguments('-fbacktrace', language: 'fortran')
-  add_project_arguments('-cpp', language: 'fortran')
   if get_option('interface') == '64'
     add_project_arguments('-fdefault-integer-8', language: 'fortran')
   endif
 elif fc.get_id() == 'intel'
   add_project_arguments('-axAVX2',    language: 'fortran')
   add_project_arguments('-traceback', language: 'fortran')
-  add_project_arguments('-fpp', language: 'fortran')
   if get_option('interface') == '64'
     add_project_arguments('-i8', language: 'fortran')
   endif
@@ -46,9 +44,8 @@ elif fc.get_id() == 'intel'
     add_project_link_arguments('-static', language: 'fortran')
   endif
 elif fc.get_id() == 'intel-cl' # for Windows with Intel Fortran
-  add_project_arguments('-QxHost',    language: 'fortran')
+  add_project_arguments('-QaxCORE-AVX2',    language: 'fortran')
   add_project_arguments('-traceback', language: 'fortran')
-  add_project_arguments('-fpp', language: 'fortran')
   if get_option('interface') == '64'
     add_project_arguments('-integer-size:64', language: 'fortran')
   endif
