@@ -32,11 +32,11 @@
       character*8 method
       integer imethod,inpchk,mform,nvec
       logical molden,da,chkinp,xtbinp
-#if defined (_WIN32) || defined (_WIN64) || defined (WIN32)
-      call system('echo %DATE% %TIME%')
-#else
-      call system('date')
-#endif
+      integer, dimension(8) :: datetimevals
+      
+      call date_and_time(VALUES=datetimevals)
+      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)', datetimevals(1:3), datetimevals(5:8)
+      
       write(*,'(//
      .          17x,''*********************************************'')')
       write(*,'(17x,''*                                           *'')')
@@ -515,11 +515,9 @@ ccccccccccccccccccccccccccccccccc
       call sutda(ncent,nmo,nao,xyz,cc,eps,occ,ccspin,iaoat,thre,
      .           thrp,ax,alpha,beta,ptlim,nvec)
       endif
-#if defined(_WIN32) || defined (_WIN64) || defined (WIN32)
-      call system('echo %DATE% %TIME%')
-#else
-      call system('date')
-#endif
+      
+      call date_and_time(VALUES=datetimevals)
+      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)', datetimevals(1:3), datetimevals(5:8)
 
       end
 
