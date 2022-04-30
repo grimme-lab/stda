@@ -50,7 +50,7 @@ elif fc.get_id() == 'intel-cl' # for Windows with Intel Fortran
     add_project_arguments('-integer-size:64', language: 'fortran')
   endif
   if get_option('static')
-    add_project_link_arguments('-MT', language: 'fortran')
+    add_project_arguments('-MT', language: 'fortran') # linker does not need MT
   endif
 endif
 
@@ -58,7 +58,9 @@ dependencies = []
 
 la_backend = get_option('la_backend')
 if la_backend == 'mkl'
-  if host_machine.system() != 'windows'
+  if host_machine.system() == 'windows'
+    libmkl = [fc.find_library('libiomp5md')]
+  else
     libmkl = [fc.find_library('pthread')]
     libmkl += fc.find_library('m')
     libmkl += fc.find_library('dl')
@@ -79,7 +81,9 @@ if la_backend == 'mkl'
     libmkl += fc.find_library('mkl_gnu_thread')
   endif
   libmkl += fc.find_library('mkl_core')
-  libmkl += fc.find_library('iomp5')
+  if host_machine.system() != 'windows'
+    libmkl += fc.find_library('iomp5')
+  endif
   dependencies += libmkl
 elif la_backend == 'openblas'
   dependencies += fc.find_library('openblas', required : true)
@@ -99,7 +103,6 @@ if get_option('openmp')
     add_project_link_arguments('-qopenmp', language : 'fortran')
   elif fc.get_id() == 'intel-cl'
     add_project_arguments('-Qopenmp', language : 'fortran')
-    add_project_link_arguments('-Qopenmp', language : 'fortran')
   else
     add_project_arguments('-fopenmp', language : 'fortran')
     add_project_link_arguments('-fopenmp', language : 'fortran')
