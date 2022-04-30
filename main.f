@@ -35,7 +35,8 @@
       integer, dimension(8) :: datetimevals
       
       call date_and_time(VALUES=datetimevals)
-      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)', datetimevals(1:3), datetimevals(5:8)
+      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',
+     .      datetimevals(1:3), datetimevals(5:8)
       
       write(*,'(//
      .          17x,''*********************************************'')')
@@ -517,7 +518,8 @@ ccccccccccccccccccccccccccccccccc
       endif
       
       call date_and_time(VALUES=datetimevals)
-      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)', datetimevals(1:3), datetimevals(5:8)
+      print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',
+     .       datetimevals(1:3), datetimevals(5:8)
 
       end
 
