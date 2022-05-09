@@ -36,7 +36,9 @@ if fc.get_id() == 'gcc'
   endif
 elif fc.get_id() == 'intel'
   add_project_arguments('-axAVX2',    language: 'fortran')
-  add_project_arguments('-traceback', language: 'fortran')
+  if get_option('buildtype') == 'debug'
+    add_project_arguments('-traceback', language: 'fortran')
+  endif
   if get_option('interface') == '64'
     add_project_arguments('-i8', language: 'fortran')
   endif
@@ -45,7 +47,9 @@ elif fc.get_id() == 'intel'
   endif
 elif fc.get_id() == 'intel-cl' # for Windows with Intel Fortran
   add_project_arguments('-QaxCORE-AVX2',    language: 'fortran')
-  add_project_arguments('-traceback', language: 'fortran')
+  if get_option('buildtype') == 'debug'
+    add_project_arguments('-traceback', language: 'fortran')
+  endif
   if get_option('interface') == '64'
     add_project_arguments('-integer-size:64', language: 'fortran')
   endif
