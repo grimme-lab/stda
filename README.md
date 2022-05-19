@@ -38,6 +38,13 @@ meson setup build_intel
 ninja -C build_intel
 ```
 
+You may also consider to add the following option to `meson`:
+
++ `-Dinterface=64` to use 64 bit integers,
++ `-Dstatic=false` to use dynamic libraries (usefull if you get error such as `ld: cannot find -lpthread` at the linking stage of `ninja`),
++ `-Dfortran_link_args=-qopenmp`(useful if you use OneAPI 2021 or latter, and meson ends with `Fortran shared or static library 'mkl_intel_thread' not found`).
+
+
 To install the `stda` binaries to `/usr/local` use (might require `sudo`)
 
 ```bash
