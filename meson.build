@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with xtb4stda.  If not, see <https://www.gnu.org/licenses/>.
 
+# modified to include options for Windows with Intel Fortran only (Shoubhik Maiti, April 2022)
+
 project('stda', 'fortran',
         version: '1.6.1',
         license: 'LGPL3',
@@ -34,12 +36,25 @@ if fc.get_id() == 'gcc'
   endif
 elif fc.get_id() == 'intel'
   add_project_arguments('-axAVX2',    language: 'fortran')
-  add_project_arguments('-traceback', language: 'fortran')
+  if get_option('buildtype') == 'debug'
+    add_project_arguments('-traceback', language: 'fortran')
+  endif
   if get_option('interface') == '64'
     add_project_arguments('-i8', language: 'fortran')
   endif
   if get_option('static')
     add_project_link_arguments('-static', language: 'fortran')
+  endif
+elif fc.get_id() == 'intel-cl' # for Windows with Intel Fortran
+  add_project_arguments('-QaxCORE-AVX2',    language: 'fortran')
+  if get_option('buildtype') == 'debug'
+    add_project_arguments('-traceback', language: 'fortran')
+  endif
+  if get_option('interface') == '64'
+    add_project_arguments('-integer-size:64', language: 'fortran')
+  endif
+  if get_option('static')
+    add_project_arguments('-MT', language: 'fortran') # linker does not need MT
   endif
 endif
 
@@ -47,10 +62,14 @@ dependencies = []
 
 la_backend = get_option('la_backend')
 if la_backend == 'mkl'
-  libmkl = [fc.find_library('pthread')]
-  libmkl += fc.find_library('m')
-  libmkl += fc.find_library('dl')
-  if fc.get_id() == 'intel'
+  if host_machine.system() == 'windows'
+    libmkl = [fc.find_library('libiomp5md')]
+  else
+    libmkl = [fc.find_library('pthread')]
+    libmkl += fc.find_library('m')
+    libmkl += fc.find_library('dl')
+  endif
+  if (fc.get_id() == 'intel') or (fc.get_id() == 'intel-cl')
     if get_option('interface') == '64'
       libmkl += fc.find_library('mkl_intel_ilp64')
     else
@@ -66,7 +85,9 @@ if la_backend == 'mkl'
     libmkl += fc.find_library('mkl_gnu_thread')
   endif
   libmkl += fc.find_library('mkl_core')
-  libmkl += fc.find_library('iomp5')
+  if host_machine.system() != 'windows'
+    libmkl += fc.find_library('iomp5')
+  endif
   dependencies += libmkl
 elif la_backend == 'openblas'
   dependencies += fc.find_library('openblas', required : true)
@@ -84,6 +105,8 @@ if get_option('openmp')
   if fc.get_id() == 'intel'
     add_project_arguments('-qopenmp', language : 'fortran')
     add_project_link_arguments('-qopenmp', language : 'fortran')
+  elif fc.get_id() == 'intel-cl'
+    add_project_arguments('-Qopenmp', language : 'fortran')
   else
     add_project_arguments('-fopenmp', language : 'fortran')
     add_project_link_arguments('-fopenmp', language : 'fortran')
