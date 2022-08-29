@@ -13,7 +13,7 @@
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with xtb4stda.  If not, see <https://www.gnu.org/licenses/>.
+# along with stda.  If not, see <https://www.gnu.org/licenses/>.
 
 option('la_backend', type: 'combo', value: 'mkl',
        choices: ['mkl', 'openblas', 'netlib', 'custom'],

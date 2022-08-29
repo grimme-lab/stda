@@ -13,7 +13,7 @@
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with xtb4stda.  If not, see <https://www.gnu.org/licenses/>.
+# along with stda.  If not, see <https://www.gnu.org/licenses/>.
 
 # modified to include options for Windows with Intel Fortran only (Shoubhik Maiti, April 2022)
 
@@ -168,3 +168,4 @@ g_spec_exe = executable('g_spec', g_spec_srcs,
                         install: true)
 
 
+install_data('qc2molden.sh', install_dir: get_option('bindir'))

@@ -161,8 +161,8 @@
 
       
  21   format(a,2i7,3f16.8)
- 22   format(i,3x,a)
- 23   format(a,3x,i,3x,a)
+ 22   format(i0,3x,a)
+ 23   format(a,3x,i0,3x,a)
  24   format(2f16.8)
  25   format(3f16.8)
 

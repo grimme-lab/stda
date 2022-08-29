@@ -1,5 +1,8 @@
 # *stda* program for computing excited states and response functions via simplified TD-DFT methods (sTDA, sTD-DFT, and SF-sTD-DFT)
 
+[![Build Status](https://travis-ci.com/grimme-lab/stda.svg?branch=master)](https://travis-ci.com/grimme-lab/stda)
+[![Build Status](https://github.com/grimme-lab/stda/workflows/CI/badge.svg)](https://github.com/grimme-lab/stda/actions)
+
 This project provides the `stda` program.
 
 ## Installation

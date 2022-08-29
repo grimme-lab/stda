@@ -736,8 +736,8 @@ cccccccccccccccccccccccccccc
       subroutine findstr(str,lenstr,ifile,i,n)
       use strings 
       implicit none 
-      character*(lenstr), intent( in ) :: str
       integer, intent( in ) :: lenstr,i,n,ifile
+      character(lenstr), intent( in ) :: str
       character*(lenstr) arg(10)
       integer narg,ios
       character*79 line
