@@ -140,7 +140,7 @@ stda_srcs = [
     'stdacommon.f90',
     'stda.f',
     'stda-rw.f',
-    'stda-rw_dual.f'
+    'stda-rw_dual.f',
     'stringmod.f90',
     'sutda.f',
     'velo.f'
