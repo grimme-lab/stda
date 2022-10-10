@@ -732,6 +732,31 @@ c Linear Response functions *
       call cpu_time(end_time)
       print '("Opt. Rot.   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
+      if(nto)then
+      nnto=num_freq
+      allocate(uci(nci,nnto))
+      write(*,*)
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)'               Welcome in print NROs
+     . program'
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)
+      Do i=1,3
+      if(i==1)write(*,*)'X axis'
+      if(i==2)write(*,*)'Y axis'
+      if(i==3)write(*,*)'Z axis'
+      Do ii=1,nnto
+      write(dummy,'(i1,a,i0)')i,'-',ii
+      open(unit=14,file=dummy)
+      read(14,*)uci(:,ii)
+      close(14,status='delete')
+      enddo
+      call print_nto_resp_new(uci,ca,moci,nci,nnto,nao,iconf,maxconf,
+     .no,nv,i,xm,ym,zm,.true.)
+      enddo
+      endif
       print '("sTD-DFT Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       CALL EXIT(STATUS)
@@ -778,7 +803,31 @@ c Linear Response functions *
       call cpu_time(end_time)
       print '("Lresp   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
-
+      if(nto)then
+      nnto=num_freq+1
+      allocate(uci(nci,nnto))
+      write(*,*)
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)'               Welcome in print NROs
+     . program'
+      write(*,*)'====================================================
+     .=================='
+      write(*,*)
+      Do i=1,3
+      if(i==1)write(*,*)'X axis'
+      if(i==2)write(*,*)'Y axis'
+      if(i==3)write(*,*)'Z axis'
+      Do ii=1,nnto
+      write(dummy,'(i1,a,i0)')i,'-',ii
+      open(unit=14,file=dummy)
+      read(14,*)uci(:,ii)
+      close(14,status='delete')
+      enddo
+      call print_nto_resp(uci,ca,moci,nci,nnto,nao,iconf,maxconf,no,nv,i
+     .,xl,yl,zl,.false.)
+      enddo
+      endif
 !       call lresp_noinv(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
 !      .                     no,nv)
 !       call lresp_noinv1(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
@@ -858,7 +907,7 @@ c Lin. Response func. 2PA   *
       read(53) amb
       close(53)
 
-      call lresp_2PA(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
+      call lresp_2PA_SP(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv,eci,uci,hci,nroot)
 
       call cpu_time(end_time)
@@ -875,7 +924,7 @@ c Lin. Response func. 2PA   *
       print '("sTD-DFT Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       write(*,*)
-      !CALL EXIT([STATUS])
+      CALL EXIT(0) !important because vectors are not normalized the same way
       endif
 
       deallocate(apb,ambsqr)

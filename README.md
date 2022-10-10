@@ -90,7 +90,7 @@ See the manual on the [release page](https://github.com/grimme-lab/stda/releases
 - S. Grimme and C. Bannwarth,  Ultra-fast computation of electronic spectra for large systems by tight-binding based simplified Tamm-Dancoff approximation (sTDA-xTB) *J. Chem. Phys.*, **2016**, 145, 054103.
   DOI: [10.1063/1.4959605](https://dx.doi.org/10.1063/1.4959605)
 
-- M. de Wergifosse, C. Bannwarth, S. Grimme, A simplified spin-flip time-dependent density functional theory (sf-sTD-DFT) approach for the electronic excitation spectra of very large diradicals, *J. Phys. Chem. A*, **2019**, 123 (27), 815–5825.
+- M. de Wergifosse, C. Bannwarth, S. Grimme, A simplified spin-flip time-dependent density functional theory (SF-sTD-DFT) approach for the electronic excitation spectra of very large diradicals, *J. Phys. Chem. A*, **2019**, 123 (27), 815–5825.
   DOI: [10.1021/acs.jpca.9b03176](https://doi.org/10.1021/acs.jpca.9b03176)
 
 - M. de Wergifosse, S. Grimme, Nonlinear-response properties in a simplified time-dependent density functional theory (sTD-DFT) framework: Evaluation of the first hyperpolarizability, *J. Chem. Phys.*, **2018**, 149 (2), 024108.
@@ -101,6 +101,12 @@ See the manual on the [release page](https://github.com/grimme-lab/stda/releases
 
 - M. de Wergifosse, J. Seibert, S. Grimme, Simplified time-dependent density functional theory (sTD-DFT) for molecular optical rotation, *J. Chem. Phys.*, **2020**, 153, 084116.
   DOI: [10.1063/5.0020543](https://doi.org/10.1063/5.0020543)
+
+- M. de Wergifosse, S. Grimme, A unified strategy for the chemically intuitive interpretation of molecular optical response properties, *J. Chem. Theory Comput.*, **2020**, 16 (12), 7709–7720.
+  DOI: [10.1021/acs.jctc.0c00990](https://doi.org/10.1021/acs.jctc.0c00990)
+
+- M. de Wergifosse, P. Beaujean, S. Grimme, Ultrafast evaluation of two-photon absorption with simplified time-dependent density functional theory, *J. Phys. Chem. A*, **2022**, XX, XXXX.
+  DOI: [10.1021/acs.jpca.2c02395](https://doi.org/10.1021/acs.jpca.2c02395)
 
 ## License
 

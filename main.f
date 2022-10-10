@@ -33,11 +33,11 @@
       integer imethod,inpchk,mform,nvec
       logical molden,da,chkinp,xtbinp
       integer, dimension(8) :: datetimevals
-      
+
       call date_and_time(VALUES=datetimevals)
       print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',
      .      datetimevals(1:3), datetimevals(5:8)
-      
+
       write(*,'(//
      .          17x,''*********************************************'')')
       write(*,'(17x,''*                                           *'')')
@@ -46,12 +46,14 @@
       write(*,'(17x,''*                S. Grimme                  *'')')
       write(*,'(17x,''* Mulliken Center for Theoretical Chemistry *'')')
       write(*,'(17x,''*             Universitaet Bonn             *'')')
-      write(*,'(17x,''*              Version 1.6.2                *'')')
-      write(*,'(17x,''*       Tue Sep 10 14:44:30 CET 2020        *'')')
+      write(*,'(17x,''*              Version 1.6.3                *'')')
+      write(*,'(17x,''*       Fri Aug 26 14:28:49 CEST 2022       *'')')
       write(*,'(17x,''*********************************************'')')
       write(*,*)
       write(*,'('' Please cite as:'')')
       write(*,'('' S. Grimme, J. Chem. Phys. 138 (2013) 244104'')')
+      write(*,'('' M. de Wergifosse, S. Grimme, J. Phys. Chem A'')')
+      write(*,'('' 125 (2021) 18 3841-3851'')')
       write(*,*)
       write(*,'('' With contributions from:'')')
       write(*,'('' C. Bannwarth, P. Shushkov, M. de Wergifosse'')')
@@ -105,6 +107,7 @@ c read the tm2xx file, otherwise (-f option) the tm2molden file
       spinflip=.false.
       sf_s2=.false.
       rw=.false.
+      rw_dual=.false.
       pt_off=.false.
       optrot=.false.
 
@@ -227,8 +230,15 @@ c read the tm2xx file, otherwise (-f option) the tm2molden file
 !          smp2=.true.
 !       endif
 
-      if(index(dummy,'-rw').ne.0)then ! Do mp2
+      if(index(dummy,'-rw').ne.0)then
          rw=.true.
+         call getarg(i+1,dummy)
+         call readl(79,dummy,xx,nn)
+         if(xx(1)==1) pt_off=.true.
+      endif
+
+      if(index(dummy,'-dual').ne.0)then
+         rw_dual=.true.
          call getarg(i+1,dummy)
          call readl(79,dummy,xx,nn)
          if(xx(1)==1) pt_off=.true.
@@ -430,10 +440,14 @@ ccccccccccccccccccccccccccccccccc
       close(12,status='delete')
       endif
 
- 21   format(3i10,3x,2f16.9)
+ 21   format(3i10,3x,2f24.9)
 
  11   format(3i5,2f9.4)
+      if(rw_dual)then
+      deallocate(ipty,exip,cxip,atnam,eta)
+      else
       deallocate(ipat,ipty,ipao,exip,cxip,atnam,eta)
+      endif
 
 
 cccccccccccccccccccccccccccccccccccccc
@@ -509,14 +523,20 @@ ccccccccccccccccccccccccccccccccc
       call stda_rw(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
      .        thrp,ax,alpha,beta,ptlim,nvec)
       else
+      if(rw_dual)then
+      call stda_rw_dual(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
+     .        thrp,ax,alpha,beta,ptlim,nvec,ipat,ipao,nprims)
+      deallocate(ipat,ipao)
+      else
       call stda(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
      .        thrp,ax,alpha,beta,ptlim,nvec)
+      endif
       endif
       else
       call sutda(ncent,nmo,nao,xyz,cc,eps,occ,ccspin,iaoat,thre,
      .           thrp,ax,alpha,beta,ptlim,nvec)
       endif
-      
+
       call date_and_time(VALUES=datetimevals)
       print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',
      .       datetimevals(1:3), datetimevals(5:8)

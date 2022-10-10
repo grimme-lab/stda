@@ -140,6 +140,7 @@ stda_srcs = [
     'stdacommon.f90',
     'stda.f',
     'stda-rw.f',
+    'stda-rw_dual.f'
     'stringmod.f90',
     'sutda.f',
     'velo.f'
@@ -166,5 +167,3 @@ g2molden_exe = executable('g2molden', g2molden_srcs,
 g_spec_exe = executable('g_spec', g_spec_srcs,
                         dependencies: dependencies,
                         install: true)
-
-

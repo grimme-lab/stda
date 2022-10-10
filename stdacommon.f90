@@ -40,7 +40,7 @@
       logical triplet,rpachk,eigvec,screen,dokshift,printexciton,velcorr
       logical aniso
       logical resp,TPA,aresp,ESA,smp2,bfw,spinflip,rw,pt_off,nto,sf_s2
-      logical optrota,velo_OR
+      logical optrota,velo_OR,rw_dual
       end module commonlogicals
 
 ! some variables for the response functions

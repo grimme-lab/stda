@@ -29,6 +29,7 @@ c nroots: number of roots                             c
 c ggavec : print z vector                             c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine srpapack(n,thr,ambsqr,apb,eci,xpy,xmy,nroots,ggavec)
+      use commonlogicals
       implicit none
       integer ierror,n,nroots,k,i,j,ij,m,nro,lin
       integer lwork,liwork,il,iu,info,nfound
@@ -94,12 +95,14 @@ c set variables for RPA diagonalization
 ! testing print Z
 !      call prmat4(6,z,n,n,'Z')
 
+      if(TPA==.false.)then
       ij=0
       do i=1,n
          ij=ij+i
          ambsqr(ij)=ambsqr(ij)*0.5
          apb(ij)=apb(ij)*0.5
       enddo
+      endif
 
       do nro=1,nroots
 

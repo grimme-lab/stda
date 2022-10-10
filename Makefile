@@ -39,7 +39,7 @@ OBJS=\
      stdacommon.o stringmod.o main.o pckao.o \
      header.o intpack.o velo.o  \
      onetri.o prmat.o readl.o block.o\
-     stda.o stda-rw.o sutda.o sfstda.o srpapack.o intslvm.o io.o\
+     stda.o stda-rw.o stda-rw_dual.o sutda.o sfstda.o srpapack.o intslvm.o io.o\
      linal.o readbasa.o readbasmold.o printvec.o normalize.o\
      apbtrafo.o sosor.o readxtb.o linear_response.o molden.o print_nto.o
 #################################################

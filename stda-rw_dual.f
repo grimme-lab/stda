@@ -52,8 +52,8 @@ C writes file <tda.dat> for spectrum plotting
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-      SUBROUTINE stda_rw(ncent,nmo,nao,xyz,c,eps,occ,iaoat,thr,thrp,
-     .            ax,alphak,betaj,fthr,nvec)
+      SUBROUTINE stda_rw_dual(ncent,nmo,nao,xyz,c,eps,occ,iaoat,thr,
+     .            thrp,ax,alphak,betaj,fthr,nvec,ipat,ipao,nprims)
       use commonlogicals
       use commonresp
       use omp_lib
@@ -134,6 +134,12 @@ c atomic masses
       common /amass/ ams(107)
       real*8 ams
       character*79 dummy
+
+c dual method extra parameters
+      real*8 thresh(2),sum_mo
+      integer num_atoms,nprims,ipat(nprims),ipao(nprims),n_MO(2)
+      integer,allocatable :: atom_list(:),mocc_1(:),mocc_2(:)
+      logical,allocatable :: mo_list(:)
 
       call cpu_time(stda_time)
 
@@ -492,7 +498,7 @@ c ams is the atomic mass (-> mol weight for output file)
       write(740)pia(1:ncent,i)
       enddo
       close(740)
-      deallocate(clow)
+      
 
       write(*,'(/'' SCF atom population (using active MOs):'')')
       write(*,'(10F7.3)')q2(1:ncent)*2.0
@@ -527,17 +533,83 @@ c ams is the atomic mass (-> mol weight for output file)
       deallocate(pij)
 
       allocate(q3(1:ncent))
+      
+c DUAL parameter selection threshold
+       write(*,*)'***Dual thresholds Method***'
+       write(*,*)
+       open(unit=15,file='dual',form='formatted',status='old')
+       thresh(1)=thr*27.211385050d0
+       read(15,*)thresh(2)
+       read(15,*)num_atoms
+       allocate(atom_list(1:num_atoms))
+       Do i=1,num_atoms
+       read(15,*)atom_list(i)
+       enddo
+       write(*,'(a,f6.2,a)') 'Atoms in the chromophore considered with 
+     .a threshold of ',thresh(1),' eV'    
+       write(*,*)  atom_list(:)
+       write(*,'(a,f6.2,a)') 'The rest uses a threshold of ',
+     .       thresh(2),' eV'
+       
+c Identify important occupied MOs for the atom list
+       
+       allocate(mo_list(no))
+       n_MO=0
+       Do i=1,no
+       sum_mo=0.0
+       Do k=1,nprims
+       Do j=1,num_atoms
+       if(ipat(k)==atom_list(j))then
+       if(k==1.or.ipao(k)/=ipao(k-1))then
+       sum_mo=sum_mo+clow(ipao(k)+(i-1)*nao)**2.0
+       endif
+       endif
+       enddo
+       enddo
+       !write(*,*)i,sum_mo
+       if(sum_mo>0.1)then
+       mo_list(i)=.true.
+       n_MO(1)=n_MO(1)+1
+       else
+       mo_list(i)=.false.
+       n_MO(2)=n_MO(2)+1
+       endif
+       !write(*,*)mo_list(i)
+       enddo
+       deallocate(clow)
+       allocate(mocc_1(n_MO(1)),mocc_2(n_MO(2)))
+       j=1
+       k=1
+       Do i=1,no
+       if(mo_list(i)==.true.)then
+       mocc_1(j)=i
+       j=j+1
+       else
+       mocc_2(k)=i
+       k=k+1
+       endif
+       enddo
+       !write(*,*)mocc_1
+       !write(*,*)mocc_2
+       write(*,'(a,f6.2,a,i)')' num. of occ. MOs with a
+     . threshold of',thresh(1),' eV :',n_MO(1)
+       write(*,'(a,f6.2,a,i)')' num. of occ. MOs with a
+     . threshold of',thresh(2),' eV :',n_MO(2)
+       thresh=thresh/27.211385050d0
+      
 c determine singles which are lower than thr
       k=0
       j=0
-      do io=1,no ! occ loop
-         q1(1:ncent)=qij(1:ncent,io) !qii
+      !First threshold
+      write(*,*)' First threshold '
+      do io=1,n_MO(1) ! occ loop
+         q1(1:ncent)=qij(1:ncent,mocc_1(io)) !qii
          do iv=no+1,moci ! virt loop
-            de=epsi(iv)-epsi(io)
+            de=epsi(iv)-epsi(mocc_1(io))
             q2(1:ncent)=qab(1:ncent,iv-no) !qaa
-            ej=dble(uci(iv-no,io))
+            ej=dble(uci(iv-no,mocc_1(io)))
             de=de-ej
-            i=nv*(io-1)+iv-no
+            i=nv*(mocc_1(io)-1)+iv-no
             q2(1:ncent)=pia(1:ncent,i)
             q3(1:ncent)=qia(1:ncent,i) !qia
             ek=sdot(ncent,q2,1,q3,1)
@@ -549,22 +621,79 @@ c determine singles which are lower than thr
             endif
 
 c the primary ones
-            if(de.le.thr)then
+            if(de.le.thresh(1))then
                k=k+1
-               iconf(k,1)=io
+               iconf(k,1)=mocc_1(io)
                iconf(k,2)=iv
                ed(k)=de
             endif
 c for PT
-            if(de.gt.thr.and.de.lt.fthr)then ! needs to be on if fthr is specified
+            if(de.gt.thresh(1).and.de.lt.fthr)then ! needs to be on if fthr is specified
                j=j+1
-               kconf(j,1)=io
+               kconf(j,1)=mocc_1(io)
                kconf(j,2)=iv
                edpt(j)=de
             endif
 
          enddo ! virt loop
       enddo ! occ loop
+      
+      nci=nex
+      nex=k
+      nexpt=j
+
+      write(*,*)
+      write(*,*)nex,'CSF included by energy with 1st threshold'
+      write(*,*)nexpt,'considered in PT2.'
+      
+      !Second threshold
+      write(*,*)
+      write(*,*)' Second threshold '
+      write(*,*)
+      ! Because MOs were included by the first threshold below vthr, we need to restrain this range 
+      ! for the lower threshold. Thus, fthr is limited now to a resonable value:
+      fthr=((1.+0.8*ax)*thresh(2))*2.0 ! The orbital energy window with the second threshold.
+      write(*,'(2x,a,f6.2,a)')'Limiting the range for PT2 to ',
+     .fthr*27.211385050d0,' eV'
+      
+      
+      do io=1,n_MO(2) ! occ loop
+         q1(1:ncent)=qij(1:ncent,mocc_2(io)) !qii
+         do iv=no+1,moci ! virt loop
+            de=epsi(iv)-epsi(mocc_2(io))
+            q2(1:ncent)=qab(1:ncent,iv-no) !qaa
+            ej=dble(uci(iv-no,mocc_2(io)))
+            de=de-ej
+            i=nv*(mocc_2(io)-1)+iv-no
+            q2(1:ncent)=pia(1:ncent,i)
+            q3(1:ncent)=qia(1:ncent,i) !qia
+            ek=sdot(ncent,q2,1,q3,1)
+            de=de+ak*ek
+
+! optional: perform K(ia,ia) dependent shift
+            if(dokshift) then
+              call kshift_to_ediag(de,ek)
+            endif
+
+c the primary ones
+            if(de.le.thresh(2))then
+               k=k+1
+               iconf(k,1)=mocc_2(io)
+               iconf(k,2)=iv
+               ed(k)=de
+            endif
+c for PT
+            if(de.gt.thresh(2).and.de.lt.fthr)then ! needs to be on if fthr is specified
+               j=j+1
+               kconf(j,1)=mocc_2(io)
+               kconf(j,2)=iv
+               edpt(j)=de
+            endif
+
+         enddo ! virt loop
+      enddo ! occ loop      
+      
+      
       deallocate(qij,qab,qia,pia,uci)
 
       nci=nex
@@ -572,7 +701,7 @@ c for PT
       nexpt=j
 
       write(*,*)
-      write(*,*)nex,'CSF included by energy.'
+      write(*,*)nex,'CSF included by energy with both thresholds.'
       write(*,*)
       write(*,*)nexpt,'considered in PT2.'
 
@@ -746,7 +875,7 @@ c Linear Response functions *
      .no,nv,i,xm,ym,zm,.true.)
       enddo
       endif
-      print '("sTD-DFT Time = ",f12.2," minutes.")'
+      print '("sTD-DFT_dual Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       CALL EXIT(STATUS)
       endif
@@ -772,7 +901,7 @@ c Linear Response functions *
 !       call cpu_time(end_time)
 !       print '("Lresp   Time = ",f12.2," minutes.")'
 !      .      ,(end_time-start_time)/60.0
-      print '("sTD-DFT-rw Time = ",f12.2," minutes.")'
+      print '("sTD-DFT-rw_dual Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       CALL EXIT(STATUS)
       endif
@@ -825,7 +954,7 @@ c Linear Response functions *
 !       call cpu_time(end_time)
 !       print '("Lresp   Time = ",f12.2," minutes.")'
 !      .      ,(end_time-start_time)/60.0
-      print '("sTD-DFT-rw Time = ",f12.2," minutes.")'
+      print '("sTD-DFT-rw_dual Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       CALL EXIT(STATUS)
       endif
@@ -1310,7 +1439,7 @@ c Lin. Response func. ESA   *
       call cpu_time(end_time)
       print '("Lresp   Time = ",f12.2," minutes.")'
      .      ,(end_time-start_time)/60.0
-      print '("sTD-DFT Time = ",f12.2," minutes.")'
+      print '("sTD-DFT_rw_dual Time = ",f12.2," minutes.")'
      .      ,(end_time-stda_time)/60.0
       else
       call lresp_ESA_tda(nci,iconf,maxconf,xl,yl,zl,moci,
@@ -1370,9 +1499,9 @@ c Lin. Response func. ESA   *
       deallocate(uci)
 
       if(rpachk) then
-      write(*,*) 'sTD-DFT-rw done.'
+      write(*,*) 'sTD-DFT-rw_dual done.'
       else
-      write(*,*) 'sTDA-rw done.'
+      write(*,*) 'sTDA-rw_dual done.'
       endif
 
 !!! old fitting part
@@ -1433,553 +1562,3 @@ c take only very bright CD ones
 
 
 
-***********************************************************************
-* select important CSFs beyond energy threshold
-***********************************************************************
-      subroutine ptselect_rw(nex,ncent,no,nv,nexpt,mxcnf,iconf,kconf,
-     .                    dak,dax,ed,edpt,gamj,gamk,thrp,new,moci)
-      use omp_lib
-      implicit none
-      integer, intent(in) :: nex,ncent,nexpt,mxcnf
-      integer, intent(in) :: kconf(mxcnf,2),no,nv
-      integer, intent (inout) :: iconf(mxcnf,2)
-      integer, intent (out) :: new
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
-      real*8, intent(in)  :: dak,dax,thrp,edpt(mxcnf)
-      real*8, intent(inout) :: ed(mxcnf)
-      real*4, allocatable :: qia(:,:),pia(:,:)
-      real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
-      real*4, allocatable :: q1(:),q2(:),q3(:)
-      real*8, allocatable :: pt(:),pt2(:)
-      integer i,j,k,io,iv,jo,jv,ierr,lin,iwrk,jwrk,iiv,jjv,ij,moci,l
-      real*4 ek,ej,sdot,tmpi,tmpj,ak,ax,integral
-      real*8 de,pert,amat
-      logical, allocatable :: incl_conf(:)
-      ak=real(dak)
-      ax=real(dax)
-      allocate(q1(ncent),q2(ncent),q3(ncent),pt(nex),pt2(nex),
-     .         incl_conf(nexpt),stat=ierr)
-      if(ierr.ne.0)stop 'allocation for PT intermediates crashed'
-      incl_conf=.false.
-
-
-      allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
-     .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-
-      open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')
-      open(unit=73,file='qab',form='unformatted',status='old')
-      open(unit=74,file='qia',form='unformatted',status='old')
-      open(unit=740,file='pia',form='unformatted',status='old')
-      Do i=1, no
-      Do j=1, i
-      ij=lin(i,j)
-      read(710)pij(1:ncent,ij)
-      enddo
-      enddo
-      close(710)
-      Do i=no+1, moci
-      k=i-no
-      Do j=no+1, i-1
-      l=j-no
-      ij=lin(k,l)
-      read(73)qab(1:ncent,ij)
-      enddo
-      ij=lin(k,k)
-      read(72)qab(1:ncent,ij)
-      enddo
-      close(72)
-      close(73)
-      Do i=1, no
-      Do j=no+1, moci
-      ij=(i-1)*nv+j-no
-      read(74)qia(1:ncent,ij)
-      read(740)pia(1:ncent,ij)
-      enddo
-      enddo
-      close(74)
-      close(740)
-
-      new=0
-      pt2=0.0d0
-
-
-! loop over secondary/neglected CSF, this is done omp-parallel
-!$omp parallel private(i,k,io,iv,iiv,iwrk,q1,de,j,jo,jv,jjv,jwrk,ek,ej,
-!$omp&                 q2,q3,pt,amat,pert) reduction (+:pt2)
-!$omp do
-      do k=1,nexpt
-         io=kconf(k,1)
-         iv=kconf(k,2)
-         iiv=iv-no
-         iwrk=(io-1)*nv + iiv
-         q1(1:ncent)=pia(1:ncent,iwrk)
-         de=edpt(k)
-c loop over primary CSF
-         do j=1,nex
-            jo=iconf(j,1)
-            jv=iconf(j,2)
-            jjv=jv-no
-            jwrk=(jo-1)*nv + jjv
-            q2(1:ncent)=qia(1:ncent,jwrk)
-            ek=sdot(ncent,q1,1,q2,1)
-c coupling
-            q2(1:ncent)=pij(1:ncent,lin(io,jo))
-            q3(1:ncent)=qab(1:ncent,lin(iiv,jjv))
-            ej=sdot(ncent,q2,1,q3,1)
-            pt(j)=0.0d0
-            amat=ak*ek-ej
-            pt(j)=amat**2/(de-ed(j)+1.d-10)
-         enddo
-         pert=sum(pt(1:nex))
-c if sum > threshold include it
-         if(pert.gt.thrp)then
-            incl_conf(k)=.true.
-         else
-            do i=1,nex
-               pt2(i)=pt2(i)+pt(i)
-            enddo
-         endif
-      enddo
-!$omp end do
-!$omp end parallel
-      deallocate(qia,qab,pij,pia)
-      do i=1,nexpt
-         if(.not.incl_conf(i)) cycle
-            io=kconf(i,1)
-            iv=kconf(i,2)
-            de=edpt(i)
-            new=new+1
-            iconf(nex+new,1)=io
-            iconf(nex+new,2)=iv
-            ed   (nex+new  )=de
-      enddo
-      pert=0.0d0
-      do i=1,nex
-         pert=pert+pt2(i)
-         ed(i)=ed(i)-pt2(i)
-      enddo
-
-      write(*,'('' average/max PT2 energy lowering (eV):'',2F10.3)')
-     .             27.21139*pert/float(nex),maxval(pt2)*27.21139
-
-
-      deallocate(q1,q2,q3,pt,pt2,incl_conf)
-      return
-
-      end subroutine ptselect_rw
-***********************************************************************
-
-
-***********************************************************************
-* set up A+B and A-B (packed form) in RKS case
-***********************************************************************
-      subroutine rrpamat_rw(nci,ncent,no,nv,mxcnf,iconf,dak,dax,ed,
-     .                  gamj,gamk,apb,ambsqr,moci)
-      use commonlogicals
-      use omp_lib
-      implicit none
-      integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
-      real*4, allocatable :: qia(:,:),pia(:,:)
-      real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
-      real*8, intent(in)  :: dak,dax,ed(mxcnf)
-      real*4, intent(out) :: apb(nci*(nci+1)/2),ambsqr(nci*(nci+1)/2)
-      real*4, allocatable :: q1(:),q2(:),q3(:)
-      integer i,j,ij,io,iv,jo,jv,ierr,lin,iiv,jjv,iwrk,jwrk,l,moci,k
-      real*4 ek,ej,sdot,ak,ax,de,integral
-      allocate(q1(ncent),q2(ncent),q3(ncent), stat=ierr)
-      if(ierr.ne.0)stop 'allocation for q1 crashed'
-      ak=real(dak)
-      ax=real(dax)
-! calculate A+B and A-B
-      apb=0.0e0
-      ambsqr=0.0e0
-      allocate(qab(ncent,nv*(nv+1)/2),
-     .         pij(ncent,no*(no+1)/2))
-
-      open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')
-      open(unit=73,file='qab',form='unformatted',status='old')
-      open(unit=74,file='qia',form='unformatted',status='old')
-      open(unit=740,file='pia',form='unformatted',status='old')
-      Do i=1, no
-      Do j=1, i
-      ij=lin(i,j)
-      read(710)pij(1:ncent,ij)
-      enddo
-      enddo
-      close(710,status='delete')
-      Do i=no+1, moci
-      k=i-no
-      Do j=no+1, i-1
-      l=j-no
-      ij=lin(k,l)
-      read(73)qab(1:ncent,ij)
-      enddo
-      ij=lin(k,k)
-      read(72)qab(1:ncent,ij)
-      enddo
-      close(72,status='delete')
-      close(73,status='delete')
-      if(abs(dax).ge.1.0d-6) then
-!$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,jjv,
-!$omp&  q2,q3,ej)
-!$omp do
-        do i=1,nci
-           io=iconf(i,1)
-           iv=iconf(i,2)
-           iiv=iv-no
-           do j=1,i-1
-              ij=lin(i,j)
-              jo=iconf(j,1)
-              jv=iconf(j,2)
-              jjv=jv-no
-              q2(1:ncent)=pij(1:ncent,lin(io,jo))
-              q3(1:ncent)=qab(1:ncent,lin(iiv,jjv))
-              ej=sdot(ncent,q2,1,q3,1) !  ej = (ij|ab)
-              ambsqr(ij)=-ej
-              apb(ij)=-ej
-           enddo ! j
-        enddo ! i
-!$omp end do
-!$omp end parallel
-      endif
-      deallocate(pij,qab)
-      allocate(qia(ncent,mxcnf),
-     .         pia(ncent,mxcnf))
-      Do i=1, no
-      Do j=no+1, moci
-      ij=(i-1)*nv+j-no
-      read(74)qia(1:ncent,ij)
-      read(740)pia(1:ncent,ij)
-      enddo
-      enddo
-      close(74,status='delete')
-      close(740,status='delete')
-
-
-! if ax=0, A-B is diagonal and its off-diagonal elements do not need to be calculated
-      if(abs(dax).lt.1.0d-6) then
-        ij=0
-!$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,
-!$omp&  jwrk,q1,q2,ek,de)
-!$omp do
-        do i=1,nci
-           io=iconf(i,1)
-           iv=iconf(i,2)
-           iiv=iv-no
-           iwrk=(io-1)*nv + iiv
-           q1(1:ncent)=pia(1:ncent,iwrk)
-           do j=1,i-1
-              ij=lin(i,j)
-              jo=iconf(j,1)
-              jv=iconf(j,2)
-              jjv=jv-no
-              jwrk=(jo-1)*nv+jjv
-              q2(1:ncent)=qia(1:ncent,jwrk)
-              ek=sdot(ncent,q1,1,q2,1)! ek = (ia|jb)
-              apb(ij)=2.0*ak*ek
-              ambsqr(ij)=0.0
-           enddo ! j
-           de=real(ed(i))
-           ij=lin(i,i)
-           q2(1:ncent)=qia(1:ncent,iwrk)
-           ek=sdot(ncent,q1,1,q2,1)
-           if(aresp.or.resp.or.optrota) then
-           ambsqr(ij)=de-ak*ek ! diagonal element of (A-B)
-           else
-           ambsqr(ij)=sqrt(de-ak*ek) ! diagonal element of (A-B)^0.5
-           endif
-           apb(ij)=de+ak*ek       ! diagonal element of A+B
-        enddo ! i
-!$omp end do
-!$omp end parallel
-        open(unit=53,file='amb',form='unformatted',status='replace')
-        write(53) ambsqr
-        close(53)
-      else
-        ij=0
-        ! for now ambsqr=A+B and apb=A-B, since we need to take the sqrt of A-B (but want to save memory)
-!$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,
-!$omp&  jwrk,q1,q2,q3,ek)
-!$omp do
-        do i=1,nci
-           io=iconf(i,1)
-           iv=iconf(i,2)
-           iiv=iv-no
-           iwrk=(io-1)*nv + iiv
-           q1(1:ncent)=pia(1:ncent,iwrk)
-           do j=1,i-1
-              ij=lin(i,j)
-              jo=iconf(j,1)
-              jv=iconf(j,2)
-              jjv=jv-no
-              jwrk=(jo-1)*nv+jjv
-              q2(1:ncent)=qia(1:ncent,jwrk)
-              ek=sdot(ncent,q1,1,q2,1) ! ek = (ia|jb)
-              ambsqr(ij)=2.0*ak*ek+ambsqr(ij)
-              jwrk=(io-1)*nv+jjv
-              q2(1:ncent)=pia(1:ncent,jwrk)
-              jwrk=(jo-1)*nv+iiv
-              q3(1:ncent)=qia(1:ncent,jwrk)
-              ek=sdot(ncent,q2,1,q3,1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
-              ambsqr(ij)=ambsqr(ij)-ax*ek
-              apb(ij)=ax*ek+apb(ij)
-           enddo ! j
-           ij=lin(i,i)
-           q2(1:ncent)=qia(1:ncent,iwrk)
-           ek=sdot(ncent,q1,1,q2,1)
-           apb(ij)=real(ed(i))-ak*ek+ax*ek    ! diagonal element of A-B
-           ambsqr(ij)=real(ed(i))-ax*ek+ak*ek ! diagonal element of A+B
-        enddo ! i
-!$omp end do
-!$omp end parallel
-      deallocate(qia,pia)
-      deallocate(q1,q2,q3)
-
-
-!        call prmat4(6,apb,nci,0,'A-B')
-!        call prmat4(6,ambsqr,nci,0,'A+B')
-      if(aresp.or.resp.or.optrota) then
-        write(*,*) ' calculating (A-B)^0.5 not necessary...'
-        open(unit=53,file='amb',form='unformatted',status='replace')
-        write(53) apb
-        close(53)
-        apb=ambsqr
-      else
-        open(unit=52,file='apbmat',form='unformatted',status='replace')
-        write(52) ambsqr
-        open(unit=53,file='amb',form='unformatted',status='replace')
-        write(53) apb
-        write(*,*) ' calculating (A-B)^0.5 ...'
-        write(*,'('' estimated time (min) '',f8.2)')
-     .            float(nci)**2*float(nci)/4.d+8/60.
-        call smatpow(nci,apb) ! calculate sqrt(a-b), termed ambsqr
-
-        ambsqr=apb
-
-        rewind(52)
-        read(52) apb
-        close(52,status='delete')
-        close(53)
-      endif
-
-
-      endif ! GGA/hybrid case
-      return
-
-      end subroutine rrpamat_rw
-***********************************************************************
-
-***********************************************************************
-* set up A matrix in RKS case
-***********************************************************************
-      subroutine rtdamat_rw(nci,ncent,no,nv,mxcnf,iconf,dak,dax
-     .                   ,ed,gamj,gamk,hci,moci)
-      use omp_lib
-      implicit none
-      integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
-      real*4, allocatable :: qia(:,:),pia(:,:)
-      real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
-      real*8, intent(in)  :: dak,dax,ed(mxcnf)
-      real*4, intent(out) :: hci(nci,nci)
-      real*4, allocatable :: q1(:),q2(:),q3(:)
-      integer i,j,ij,io,iv,jo,jv,ierr,lin,iiv,jjv,iwrk,jwrk,l,k,moci
-      real*4 ek,ej,sdot,ak,ax,de,integral
-      allocate(q1(ncent),q2(ncent),q3(ncent), stat=ierr)
-      if(ierr.ne.0)stop 'allocation for qkj crashed'
-      ak=real(dak)
-      ax=real(dax)
-
-      allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
-     .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-
-      open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')
-      open(unit=73,file='qab',form='unformatted',status='old')
-      open(unit=74,file='qia',form='unformatted',status='old')
-      open(unit=740,file='pia',form='unformatted',status='old')
-      Do i=1, no
-      Do j=1, i
-      ij=lin(i,j)
-      read(710)pij(1:ncent,ij)
-      enddo
-      enddo
-      close(710,status='delete')
-      Do i=no+1, moci
-      k=i-no
-      Do j=no+1, i-1
-      l=j-no
-      ij=lin(k,l)
-      read(73)qab(1:ncent,ij)
-      enddo
-      ij=lin(k,k)
-      read(72)qab(1:ncent,ij)
-      enddo
-      close(72,status='delete')
-      close(73,status='delete')
-      Do i=1, no
-      Do j=no+1, moci
-      ij=(i-1)*nv+j-no
-      read(74)qia(1:ncent,ij)
-      read(740)pia(1:ncent,ij)
-      enddo
-      enddo
-      close(74,status='delete')
-      close(740,status='delete')
-
-! calculate CIS matrix A
-      hci=0.0e0
-!$omp parallel private(i,j,io,iv,jo,jv,iiv,iwrk,jjv,jwrk,q1,
-!$omp& q2,q3,ek,ej)
-!$omp do
-      do i=1,nci
-         io=iconf(i,1)
-         iv=iconf(i,2)
-         iiv=iv-no
-         iwrk=(io-1)*nv + iiv
-         q1(1:ncent)=pia(1:ncent,iwrk)
-         do j=1,i-1
-            jo=iconf(j,1)
-            jv=iconf(j,2)
-            jjv=jv-no
-            jwrk=(jo-1)*nv + jjv
-            q2(1:ncent)=qia(1:ncent,jwrk)
-            ek=sdot(ncent,q1,1,q2,1)
-            q2(1:ncent)=pij(1:ncent,lin(io,jo))
-            q3(1:ncent)=qab(1:ncent,lin(iiv,jjv))
-            ej=sdot(ncent,q2,1,q3,1)
-            hci(j,i)=ak*ek-ej
-            hci(i,j)=hci(j,i)
-         enddo
-         hci(i,i)=real(ed(i))
-      enddo
-!$omp end do
-!$omp end parallel
-      deallocate(qia,qab,pij,pia)
-      deallocate(q1,q2,q3)
-      return
-      end subroutine rtdamat_rw
-***********************************************************************
-
-      real*4 function integral(q_ij,q_ab,gamma,ncent)
-      use omp_lib
-      implicit none
-      ! Compute semi-empirical integrals directly
-      integer, intent(in) :: ncent
-      real*8,  intent(in) :: gamma(1:ncent,1:ncent)
-      real*4 :: q_ij(1:ncent), q_ab(1:ncent), intermediate(1:ncent)
-      real*4 :: sdot
-      call ssymv('u',ncent,1.0,gamma,ncent,q_ab,1,0.0,intermediate,1)
-      integral = sdot(ncent,q_ij,1,intermediate,1)
-      return
-      end
-
-***********************************************************************
-* set up 0.5*B  (packed form) in RKS case
-***********************************************************************
-      subroutine rtdacorr_rw(nci,ncent,no,nv,mxcnf,iconf,dak,dax
-     .                    ,ed,gamj,gamk,moci)
-      use omp_lib
-      implicit none
-      integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
-      real*4, allocatable :: qia(:,:),pia(:,:)
-      real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
-      real*8, intent(in)  :: dak,dax,ed(mxcnf)
-      real*4, allocatable :: q1(:),q2(:),q3(:),bmat(:)
-      integer i,j,io,iv,jo,jv,ierr,iiv,jjv,iwrk,jwrk,l,k,moci
-      integer*8 ij,lin8
-      real*4 ek,ej,sdot,ak,ax,de,fact,integral
-      ij=nci
-      ij=ij*(ij+1)/2
-      allocate(q1(ncent),q2(ncent),q3(ncent),bmat(ij), stat=ierr)
-      if(ierr.ne.0)stop 'allocation for qkj/bmat crashed'
-      ak=real(dak)
-      ax=real(dax)
-
-      allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
-     .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-
-      open(unit=710,file='pij',form='unformatted',status='old')
-      open(unit=72,file='qaa',form='unformatted',status='old')
-      open(unit=73,file='qab',form='unformatted',status='old')
-      open(unit=74,file='qia',form='unformatted',status='old')
-      open(unit=740,file='pia',form='unformatted',status='old')
-      Do i=1, no
-      Do j=1, i
-      ij=lin8(i,j)
-      read(710)pij(1:ncent,ij)
-      enddo
-      enddo
-      close(710)
-      Do i=no+1, moci
-      k=i-no
-      Do j=no+1, i-1
-      l=j-no
-      ij=lin8(k,l)
-      read(73)qab(1:ncent,ij)
-      enddo
-      ij=lin8(k,k)
-      read(72)qab(1:ncent,ij)
-      enddo
-      close(72)
-      close(73)
-      Do i=1, no
-      Do j=no+1, moci
-      ij=(i-1)*nv+j-no
-      read(74)qia(1:ncent,ij)
-      read(740)pia(1:ncent,ij)
-      enddo
-      enddo
-      close(74)
-      close(740)
-
-
-! calculate 0.5*B
-      bmat=0.0e0
-      fact=0.50d0 ! this is the scaling of the B-contribution
-      open(unit=52,file='bmat',form='unformatted',status='replace')
-      ij=0
-!$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,
-!$omp&                 jwrk,q1,q2,q3,ek,ej)
-!$omp do
-      do i=1,nci
-           io=iconf(i,1)
-           iv=iconf(i,2)
-           iiv=iv-no
-           iwrk=(io-1)*nv + iiv
-           q1(1:ncent)=pia(1:ncent,iwrk)
-           do j=1,i-1
-              ij=lin8(i,j)
-              jo=iconf(j,1)
-              jv=iconf(j,2)
-              jjv=jv-no
-              jwrk=(jo-1)*nv + jjv
-              q2(1:ncent)=qia(1:ncent,jwrk)
-              ek=sdot(ncent,q1,1,q2,1) ! ek = (ia|bj)
-              bmat(ij)=(fact)*ak*ek
-              jwrk=(io-1)*nv+jjv
-              q2(1:ncent)=pia(1:ncent,jwrk)
-              jwrk=(jo-1)*nv+iiv
-              q3(1:ncent)=qia(1:ncent,jwrk)
-              ek=sdot(ncent,q2,1,q3,1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
-              bmat(ij)=bmat(ij)-fact*ax*ek ! scaled by ax
-           enddo
-           ij=lin8(i,i)
-           q2(1:ncent)=qia(1:ncent,iwrk)
-           ek=sdot(ncent,q1,1,q2,1)
-           bmat(ij)=fact*(ak*ek-ax*ek) ! diagonal element of 0.5*B
-      enddo
-!$omp end do
-!$omp end parallel
-      write(52)bmat
-      close(52)
-      deallocate(qia,qab,pij,pia)
-      deallocate(bmat,q1,q2,q3)
-      return
-
-      end subroutine rtdacorr_rw
-***********************************************************************
