@@ -37,6 +37,7 @@
      .                     no,nv)
       use stdacommon
       use commonresp
+      use commonlogicals
       implicit none
       integer:: moci,nci,nroot,nao,maxconf,no,nv
       real*4:: Xci(nci,nroot),X(no,nv),MO(nao)
@@ -72,7 +73,11 @@
       enddo
       close(12,status='delete')
       open(unit=11,file='NTOao')
+      if(rw_dual)then
+      allocate(ipty(nprims),info(nprims))
+      else
       allocate(ipat(nprims),ipty(nprims),ipao(nprims),info(nprims))
+      endif
       allocate(atnam(ncent),exip(nprims),cxip(nprims),co(ncent,4))
       allocate(f_info(nbf))
       Do i=1, nprims
@@ -359,6 +364,7 @@
      .                   maxconfb,nob,nvb)
       use stdacommon
       use commonresp
+      use commonlogicals
       implicit none
       integer:: mocia,nci,nroot,nao,maxconfa,noa,nva
       real*4:: Xci(nci,nroot),Xa(noa,nva),MO(nao)
@@ -400,7 +406,11 @@
       enddo
       close(12,status='delete')
       open(unit=11,file='NTOao')
+      if(rw_dual)then
+      allocate(ipty(nprims),info(nprims))
+      else
       allocate(ipat(nprims),ipty(nprims),ipao(nprims),info(nprims))
+      endif
       allocate(atnam(ncent),exip(nprims),cxip(nprims),co(ncent,4))
       allocate(f_info(nbf))
       Do i=1, nprims
@@ -783,6 +793,7 @@
      .                   maxconfb,nob,nvb)
       use stdacommon
       use commonresp
+      use commonlogicals
       implicit none
       integer:: mocia,nci,nroot,nao,noa,nva
       real*4:: Xci(nci,nroot),Xa(noa,noa),MO(nao),X(noa,nvb)
@@ -827,7 +838,11 @@
       enddo
       close(12,status='delete')
       open(unit=11,file='NTOao')
+      if(rw_dual)then
+      allocate(ipty(nprims),info(nprims))
+      else
       allocate(ipat(nprims),ipty(nprims),ipao(nprims),info(nprims))
+      endif
       allocate(atnam(ncent),exip(nprims),cxip(nprims),co(ncent,4))
       allocate(f_info(nbf))
       Do i=1, nprims
@@ -1713,6 +1728,7 @@
      .                    maxconf,no,nv,axe,mu_x,mu_y,mu_z,flag3)
       use stdacommon
       use commonresp
+      use commonlogicals
       implicit none
       integer:: moci,nci,nroot,nao,maxconf,no,nv
       real*4:: Xci(nci,nroot),X(no,nv),MO(nao)
@@ -1767,7 +1783,11 @@
       close(12)
       endif
       open(unit=11,file='NTOao')
+      if(rw_dual)then
+      allocate(ipty(nprims),info(nprims))
+      else
       allocate(ipat(nprims),ipty(nprims),ipao(nprims),info(nprims))
+      endif
       allocate(atnam(ncent),exip(nprims),cxip(nprims),co(ncent,4))
       allocate(f_info(nbf))
       Do i=1, nprims
@@ -2185,6 +2205,7 @@
      .                    maxconf,no,nv,axe,mu_x,mu_y,mu_z,flag3)
       use stdacommon
       use commonresp
+      use commonlogicals
       implicit none
       integer:: moci,nci,nroot,nao,maxconf,no,nv
       real*4:: Xci(nci,nroot),X(no,nv),MO(nao)
@@ -2254,7 +2275,11 @@
       close(12)
       endif
       open(unit=11,file='NTOao')
+      if(rw_dual)then
+      allocate(ipty(nprims),info(nprims))
+      else
       allocate(ipat(nprims),ipty(nprims),ipao(nprims),info(nprims))
+      endif
       allocate(atnam(ncent),exip(nprims),cxip(nprims),co(ncent,4))
       allocate(f_info(nbf))
       Do i=1, nprims

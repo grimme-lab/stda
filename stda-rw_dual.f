@@ -498,7 +498,7 @@ c ams is the atomic mass (-> mol weight for output file)
       write(740)pia(1:ncent,i)
       enddo
       close(740)
-      
+
 
       write(*,'(/'' SCF atom population (using active MOs):'')')
       write(*,'(10F7.3)')q2(1:ncent)*2.0
@@ -533,7 +533,7 @@ c ams is the atomic mass (-> mol weight for output file)
       deallocate(pij)
 
       allocate(q3(1:ncent))
-      
+
 c DUAL parameter selection threshold
        write(*,*)'***Dual thresholds Method***'
        write(*,*)
@@ -545,14 +545,14 @@ c DUAL parameter selection threshold
        Do i=1,num_atoms
        read(15,*)atom_list(i)
        enddo
-       write(*,'(a,f6.2,a)') 'Atoms in the chromophore considered with 
-     .a threshold of ',thresh(1),' eV'    
+       write(*,'(a,f6.2,a)') 'Atoms in the chromophore considered with
+     .a threshold of ',thresh(1),' eV'
        write(*,*)  atom_list(:)
        write(*,'(a,f6.2,a)') 'The rest uses a threshold of ',
      .       thresh(2),' eV'
-       
+
 c Identify important occupied MOs for the atom list
-       
+
        allocate(mo_list(no))
        n_MO=0
        Do i=1,no
@@ -596,7 +596,7 @@ c Identify important occupied MOs for the atom list
        write(*,'(a,f6.2,a,i)')' num. of occ. MOs with a
      . threshold of',thresh(2),' eV :',n_MO(2)
        thresh=thresh/27.211385050d0
-      
+
 c determine singles which are lower than thr
       k=0
       j=0
@@ -637,7 +637,7 @@ c for PT
 
          enddo ! virt loop
       enddo ! occ loop
-      
+
       nci=nex
       nex=k
       nexpt=j
@@ -645,18 +645,18 @@ c for PT
       write(*,*)
       write(*,*)nex,'CSF included by energy with 1st threshold'
       write(*,*)nexpt,'considered in PT2.'
-      
+
       !Second threshold
       write(*,*)
       write(*,*)' Second threshold '
       write(*,*)
-      ! Because MOs were included by the first threshold below vthr, we need to restrain this range 
+      ! Because MOs were included by the first threshold below vthr, we need to restrain this range
       ! for the lower threshold. Thus, fthr is limited now to a resonable value:
       fthr=((1.+0.8*ax)*thresh(2))*2.0 ! The orbital energy window with the second threshold.
       write(*,'(2x,a,f6.2,a)')'Limiting the range for PT2 to ',
      .fthr*27.211385050d0,' eV'
-      
-      
+
+
       do io=1,n_MO(2) ! occ loop
          q1(1:ncent)=qij(1:ncent,mocc_2(io)) !qii
          do iv=no+1,moci ! virt loop
@@ -691,9 +691,9 @@ c for PT
             endif
 
          enddo ! virt loop
-      enddo ! occ loop      
-      
-      
+      enddo ! occ loop
+
+
       deallocate(qij,qab,qia,pia,uci)
 
       nci=nex
@@ -1557,8 +1557,3 @@ c take only very bright CD ones
       close(28)
 
       end
-
-
-
-
-
