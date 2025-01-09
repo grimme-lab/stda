@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !
@@ -29,7 +30,7 @@
       integer:: nmo,nbf,imethod,icdim,ccspin(nmo),counter_BF
       integer:: f_info(nbf),flag,flag2
       real*8:: cc(icdim),norm(nprims)
-      
+
       open(unit=11,file='molden.molden')
       open(unit=12,file='fnorm')
       ! read normalization
@@ -44,7 +45,7 @@
       write(11,21) atnam(i),i,int(co(i,4)),co(i,1:3)*0.52917721092
       enddo
       !Basis set (sp are seperated)
-      
+
       ! Counting the number of prim in each contraction
       prim=1
       info=1
@@ -58,7 +59,7 @@
       endif
       endif
       enddo
-      
+
       write(11,*) '[GTO]'
       at=0
       counter_BF=0
@@ -85,14 +86,14 @@
       if(ipty(i)==2.and.flag==0)  write(11,23)'p',info(i),'1.000000'
       if(ipty(i)==5)  write(11,23)'d',info(i),'1.000000'
       if(ipty(i)==11) write(11,23)'f',info(i),'1.000000'
-      
+
       if(ipty(i)==14.or.ipty(i)==15.or.ipty(i)==16.or.
      . ipty(i)==17.or.ipty(i)==18.or.ipty(i)==19) then
       f_info(counter_BF)=ipty(i)
 
       endif
-      
-      
+
+
       endif
       !
       !   Contractactions are normalized
@@ -116,7 +117,7 @@
      .      /((2.0*exip(i))**3.0*dsqrt(2.0*exip(i))))/norm(i)
       if(ipty(i)==11) write(11,24)exip(i),
      .      cxip(i)*dsqrt(5.5683279968317*1.875
-     .      /((2.0*exip(i))**4.0*dsqrt(2.0*exip(i))))/norm(i)      
+     .      /((2.0*exip(i))**4.0*dsqrt(2.0*exip(i))))/norm(i)
       at=ipat(i)
       if(at/=ipat(i+1)) write(11,*)
       if(flag==1.and.ipty(i)==4)then
@@ -124,10 +125,10 @@
       flag2=0
       endif
       enddo
-      
+
       ! MOs
-      
-      write(11,*) '[MO]'      
+
+      write(11,*) '[MO]'
       Do i=1,nmo
       write(11,*) 'Sym= X'
       write(11,*) 'Ene=',eps(i)
@@ -139,18 +140,18 @@
       endif
       write(11,*) 'Occup=',int(occ(i))
       Do j=1,nbf
-      
+
       ! f molden order
       if(f_info(j)==14.or.f_info(j)==15.or.f_info(j)==16.or.
      . f_info(j)==17.or.f_info(j)==18.or.f_info(j)==19) then
-     
+
       if(f_info(j)==14)write(11,*) j, cc((i-1)*nbf+j+2) ! 16
       if(f_info(j)==15)write(11,*) j, cc((i-1)*nbf+j-1) ! 14
       if(f_info(j)==16)write(11,*) j, cc((i-1)*nbf+j-1) ! 15
       if(f_info(j)==17)write(11,*) j, cc((i-1)*nbf+j+1) ! 18
       if(f_info(j)==18)write(11,*) j, cc((i-1)*nbf+j+1) ! 19
       if(f_info(j)==19)write(11,*) j, cc((i-1)*nbf+j-2) ! 17
-      
+
       else
       write(11,*) j, cc((i-1)*nbf+j)
       endif
@@ -159,10 +160,10 @@
       write(11,*)
       close(11)
 
-      
+
  21   format(a,2i7,3f16.8)
- 22   format(i,3x,a)
- 23   format(a,3x,i,3x,a)
+ 22   format(i7,3x,a)
+ 23   format(a,3x,i7,3x,a)
  24   format(2f16.8)
  25   format(3f16.8)
 

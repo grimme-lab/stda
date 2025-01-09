@@ -1,125 +1,138 @@
-# This file is part of stda.
+# This file is part of std2.
 #
 # Copyright (C) 2019 Sebastian Ehlert
-#
-# stda is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# stda is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with xtb4stda.  If not, see <https://www.gnu.org/licenses/>.
+# Copyright (C) 2024 Marc de Wergifosse
 
-# modified to include options for Windows with Intel Fortran only (Shoubhik Maiti, April 2022)
+# Modified by P. Beaujean
 
-project('stda', 'fortran',
-        version: '1.6.1',
-        license: 'LGPL3',
-        meson_version: '>=0.51')
+project('std2', 'fortran',
+  version: '1.6.1',
+  meson_version: '>=0.51',
+  default_options : ['warning_level=0', 'fortran_std=legacy'],
+)
 
-if get_option('interface') == '64' and get_option('la_backend') != 'mkl'
-  error('64 bit integer interface only supported for MKL backend')
+if get_option('interface') == '64' and (get_option('la_backend') == 'netlib' or get_option('la_backend') == 'openblas')
+  error('64 bit integer interface not supported by OpenBLAS/netlib backends, use -Dinterface=32')
 endif
 
+# set compiler options
 fc = meson.get_compiler('fortran')
 
-if fc.get_id() == 'gcc'
-  add_project_arguments('-ffree-line-length-none', language: 'fortran')
-  add_project_arguments('-fbacktrace', language: 'fortran')
-  if get_option('interface') == '64'
-    add_project_arguments('-fdefault-integer-8', language: 'fortran')
-  endif
-elif fc.get_id() == 'intel'
-  add_project_arguments('-axAVX2',    language: 'fortran')
-  if get_option('buildtype') == 'debug'
-    add_project_arguments('-traceback', language: 'fortran')
-  endif
-  if get_option('interface') == '64'
-    add_project_arguments('-i8', language: 'fortran')
-  endif
-  if get_option('static')
-    add_project_link_arguments('-static', language: 'fortran')
-  endif
-elif fc.get_id() == 'intel-cl' # for Windows with Intel Fortran
-  add_project_arguments('-QaxCORE-AVX2',    language: 'fortran')
-  if get_option('buildtype') == 'debug'
-    add_project_arguments('-traceback', language: 'fortran')
-  endif
-  if get_option('interface') == '64'
-    add_project_arguments('-integer-size:64', language: 'fortran')
-  endif
-  if get_option('static')
-    add_project_arguments('-MT', language: 'fortran') # linker does not need MT
-  endif
+build_args = [
+  '-DPROJECT_NAME="' + meson.project_name() + '"',
+  '-DPROJECT_VERSION="' + meson.project_version() + '"',
+]
+
+if fc.has_argument('-march=native')
+    build_args += ['-march=native', '-fno-math-errno']
+    if fc.get_id() == 'intel'
+        build_args += ['-unroll-aggressive', '-ipo']
+    else
+        build_args += ['-funroll-loops', '-ftree-vectorize']
+    endif
+    message('added -march=native and loop unroling flags')
 endif
 
-dependencies = []
+# configure project_dep
+project_dep = []
+libcint_options = ['with_fortran=true', 'with_cint2_interface=true']
 
 la_backend = get_option('la_backend')
 if la_backend == 'mkl'
-  if host_machine.system() == 'windows'
-    libmkl = [fc.find_library('libiomp5md')]
+  # build a pkg-config compatible string, list all possibilities with `pkg-config --list-all | grep "mkl"`
+  mkl_kind = 'mkl'
+  if get_option('static')
+    mkl_kind += '-static'
+    build_args += '-static'
   else
-    libmkl = [fc.find_library('pthread')]
-    libmkl += fc.find_library('m')
-    libmkl += fc.find_library('dl')
+    mkl_kind += '-dynamic'
   endif
-  if (fc.get_id() == 'intel') or (fc.get_id() == 'intel-cl')
-    if get_option('interface') == '64'
-      libmkl += fc.find_library('mkl_intel_ilp64')
+
+  if get_option('interface') == '64'
+    mkl_kind += '-ilp64'
+    # specific requirements for ilp64 libraries, see https://www.intel.com/content/www/us/en/docs/onemkl/developer-guide-windows/2023-0/using-the-ilp64-interface-vs-lp64-interface.html
+    build_args += '-DMKL_ILP64'
+    libcint_options += 'i8=true'
+    if fc.get_id() == 'intel' or fc.get_id() == 'intel-llvm'
+      build_args += '-i8'
     else
-      libmkl += fc.find_library('mkl_intel_lp64')
+      build_args += '-fdefault-integer-8'
     endif
-    libmkl += fc.find_library('mkl_intel_thread')
   else
-    if get_option('interface') == '64'
-      libmkl += fc.find_library('mkl_gf_ilp64')
-    else
-      libmkl += fc.find_library('mkl_gf_lp64')
-    endif
-    libmkl += fc.find_library('mkl_gnu_thread')
+    mkl_kind += '-lp64'
   endif
-  libmkl += fc.find_library('mkl_core')
-  if host_machine.system() != 'windows'
-    libmkl += fc.find_library('iomp5')
+
+  if get_option('openmp')
+    mkl_kind += '-iomp'
+  else
+    mkl_kind += '-seq'
   endif
-  dependencies += libmkl
+
+  message('MKL kind: ' +  mkl_kind)
+
+  # backups for system that do not provide pkg-config
+  mkl_libraries = {
+    'mkl-dynamic-ilp64-iomp': ['mkl_core', 'mkl_intel_ilp64', 'mkl_gnu_thread', 'iomp5', 'pthread', 'm', 'dl'],
+    'mkl-dynamic-ilp64-seq': ['mkl_core', 'mkl_intel_ilp64', 'mkl_sequential', 'm', 'dl'],
+    'mkl-dynamic-lp64-iomp': ['mkl_core', 'mkl_intel_lp64', 'mkl_gnu_thread', 'iomp5', 'pthread', 'm', 'dl'],
+    'mkl-dynamic-lp64-seq': ['mkl_core', 'mkl_intel_lp64', 'mkl_sequential', 'm', 'dl']
+    # ... some of them are missing at the moment
+  }
+
+  mkl_dep = dependency(mkl_kind, required: false)
+  if mkl_dep.found() # pkg-config
+    project_dep += mkl_dep
+  else # back up to finding libraries one per one
+    foreach lib: mkl_libraries[mkl_kind]
+      project_dep += fc.find_library(lib)
+    endforeach
+  endif
 elif la_backend == 'openblas'
-  dependencies += fc.find_library('openblas', required : true)
-  dependencies += fc.find_library('lapack', required : true)
+  project_dep += fc.find_library('openblas', required : true)
+  project_dep += fc.find_library('lapack', required : true)
+elif la_backend == 'netlib'
+  project_dep += fc.find_library('blas', required : true)
+  project_dep += fc.find_library('lapack', required : true)
 elif la_backend == 'custom'
   foreach lib: get_option('custom_libraries')
-    dependencies += fc.find_library(lib)
+    project_dep += fc.find_library(lib)
   endforeach
-else
-  dependencies += fc.find_library('blas', required : true)
-  dependencies += fc.find_library('lapack', required : true)
 endif
 
-if get_option('openmp')
-  if fc.get_id() == 'intel'
-    add_project_arguments('-qopenmp', language : 'fortran')
-    add_project_link_arguments('-qopenmp', language : 'fortran')
-  elif fc.get_id() == 'intel-cl'
-    add_project_arguments('-Qopenmp', language : 'fortran')
+# add openMP if requested but MKL (and thus intel-openMP) was not used
+if la_backend != 'mkl' and get_option('openmp')
+  dep_openmp = dependency('openmp', required: false)
+  if dep_openmp.found()
+    project_dep += dep_openmp
   else
-    add_project_arguments('-fopenmp', language : 'fortran')
-    add_project_link_arguments('-fopenmp', language : 'fortran')
+    if fc.get_id() == 'intel' or fc.get_id() == 'intel-llvm'
+      build_args += '-qopenmp'
+    else
+      build_args += '-fopenmp'
+    endif
   endif
 endif
 
-stda_srcs = [
+libcint_dep = fc.find_library('libcint', required: false)
+if not libcint_dep.found()
+  libcint_proj = subproject('libcint', default_options: libcint_options)
+  libcint_dep = libcint_proj.get_variable('libcint_dep')
+endif
+project_dep += libcint_dep
+
+message('Build args are: ' + ', '.join(build_args))
+
+# Sources
+std2_srcs = [
+    '2PA.f90',
     'apbtrafo.f',
     'block.f',
+    'full.f',
     'header.f',
     'intpack.f90',
     'intslvm.f',
     'io.f',
+    'libcint.f',
     'linal.f',
     'linear_response.f',
     'main.f',
@@ -137,13 +150,14 @@ stda_srcs = [
     'sfstda.f',
     'sosor.f',
     'srpapack.f',
-    'stdacommon.f90',
     'stda.f',
+    'stdacommon.f90',
     'stda-rw.f',
     'stda-rw_dual.f',
     'stringmod.f90',
     'sutda.f',
-    'velo.f'
+    'velo.f',
+    'xstd.f90',
 ]
 
 g_spec_srcs = [
@@ -155,15 +169,32 @@ g2molden_srcs = [
     'g2molden/stringmod.f90'
 ]
 
-stda_exe = executable(meson.project_name(), stda_srcs,
-                      dependencies: dependencies,
-                      install: true)
+# Executables
+std2_exe = executable(
+  meson.project_name(),
+  std2_srcs,
+  dependencies: project_dep,
+  fortran_args : build_args,
+  link_language : 'fortran',
+  install: true
+)
 
-g2molden_exe = executable('g2molden', g2molden_srcs,
-                          dependencies: dependencies,
-                          install: true)
+g2molden_exe = executable(
+  'g2molden',
+  g2molden_srcs,
+  dependencies: project_dep,
+  fortran_args : build_args,
+  link_language : 'fortran',
+  install: true
+)
 
+g_spec_exe = executable(
+  'g_spec', g_spec_srcs,
+  dependencies: project_dep,
+  fortran_args : build_args,
+  link_language : 'fortran',
+  install: true
+)
 
-g_spec_exe = executable('g_spec', g_spec_srcs,
-                        dependencies: dependencies,
-                        install: true)
+# add test
+test('valid input', std2_exe, args: ['-f', '../tests/water_sto3g.molden', '-sty', '3', '-ax', '1', '-e', '20'], suite: 'app')

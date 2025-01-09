@@ -1,23 +1,24 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
       SUBROUTINE SETETA(J,MNL)
       use stdacommon
-      IMPLICIT REAL*8(A-H,O-Z)                                                  
+      IMPLICIT REAL*8(A-H,O-Z)
 
       common /carte/   lmn(0:3,0:3,0:3)
       dimension mnl(3)
@@ -46,12 +47,12 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       SUBROUTINE VELO(I,J,D)
       use stdacommon
       use intpack
-      IMPLICIT REAL*8(A-H,O-Z)                                                  
+      IMPLICIT REAL*8(A-H,O-Z)
 
       common /carte/   lmn(0:3,0:3,0:3)
 
       dimension v(3),point(3),nml(3),d(*)
-      
+
       point=0
       ity=ipty(j)
       if(ity.gt.10.or.ipty(i).gt.10) then
@@ -71,9 +72,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
             enddo
          enddo
       enddo
-      
+
 100   alp=exip(j)
-      if(ity.gt.10) goto 99 
+      if(ity.gt.10) goto 99
 
 
 C first term dipole
@@ -122,7 +123,7 @@ C all terms overlap
   3   continue
 
       return
-       
+
  99   continue
 c     write(*,*) 'no f-functions for velocity integrals'
       return
@@ -136,12 +137,12 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       SUBROUTINE LXYZ(I,J,D)
       use stdacommon
       use intpack
-      IMPLICIT REAL*8(A-H,O-Z)                                                  
+      IMPLICIT REAL*8(A-H,O-Z)
 
       common /carte/   lmn(0:3,0:3,0:3)
-      
+
       dimension v(3),point(3),nml(3),d(*)
-      
+
       ity=ipty(j)
       do l=0,2
          do m=0,2
@@ -155,9 +156,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
             enddo
          enddo
       enddo
-      
+
 100   alp=exip(j)
-      if(ity.gt.10) goto 99 
+      if(ity.gt.10) goto 99
 
 C all terms overlap
 
@@ -198,7 +199,7 @@ C all terms overlap
       nml(jj)=nml(jj)-1
       call seteta(j,nml)
       vz2=2.*alp*v(ii)
-   
+
       if(nml(ii).gt.0) then
          nml(ii)=nml(ii)-1
          call seteta(j,nml)
@@ -222,7 +223,7 @@ C all terms overlap
       enddo
 
       return
-       
+
  99   write(*,*) 'no f-functions for lxyz integrals'
       stop
       end

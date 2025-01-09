@@ -1,23 +1,24 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
       subroutine printvectda(rpachk,nci,nroot,uci,eci)
       ! This routine prints out eigenvectors in TM format
-      integer, intent ( in ) :: nci,nroot       
+      integer, intent ( in ) :: nci,nroot
       real*4, intent ( in ) :: uci(nci,nci),eci(nci)
       logical, intent ( in ) :: rpachk
       integer i,j,ij,k,jhilf,ii,ihilf,jhomo,nvec,itype,nmo,na
@@ -35,7 +36,7 @@
         read(39,*) nvec,nmo,jhomo
         allocate(vecchk(nmo), iconf(nci,2),icsf(jhomo*(nmo-jhomo)),
      .         stat=i)
-        if(i.ne.0)stop 'allocation failed in printz' 
+        if(i.ne.0)stop 'allocation failed in printz'
         do i=1,nmo
           read(39,*) vecchk(i)
         enddo
@@ -43,12 +44,12 @@
           read(39,*) iconf(i,1),iconf(i,2)
         enddo
       else
-! unrestricted case 
+! unrestricted case
         read(39,*) nvec,nmo,jhomo
         read(39,*) nexa,nexb,jhomoa,jhomob
         na=nmo/2 ! number of alpha (and beta) mos
         ij=jhomoa*(na-jhomoa)+jhomob*(na-jhomob)
-        allocate(vecchk(na), iconf(nexa,2),iconfb(nexb,2), 
+        allocate(vecchk(na), iconf(nexa,2),iconfb(nexb,2),
      .   vecchkb(na),icsf(jhomoa*(na-jhomoa)),icsfb(jhomob*(na-jhomob))
      .   , stat=i)
         if(i.ne.0)stop 'allocation failed in printz'
@@ -83,12 +84,12 @@
       open(unit=29,file=trim(fname),status='replace')
       write(29,'(a)',advance='yes') '$title'
       write(29,'(a)',advance='yes') '$symmetry c1'
-      write(29,'(a)',advance='no') '$tensor space dimension' 
+      write(29,'(a)',advance='no') '$tensor space dimension'
       if(itype.eq.2) then
         na=nmo/2
         ij=jhomoa*(na-jhomoa)+jhomob*(na-jhomob)
         write(29,'(x,i8)',advance='yes') ij
-      else 
+      else
         write(29,'(x,i8)',advance='yes') jhomo*(nmo-jhomo)
       endif
       select case(itype)
@@ -143,8 +144,8 @@
             endif
           enddo
         enddo
-      else 
-      !sort for unrestricted case 
+      else
+      !sort for unrestricted case
         icsfb=0
         do i=1,nexa
           ihilf=iconf(i,1)
@@ -161,7 +162,7 @@
                   exit
                 endif
               enddo
-!              l=l+(jhomoa-j)*(na-jhomoa) 
+!              l=l+(jhomoa-j)*(na-jhomoa)
               exit
             else
               l=l+na-jhomoa
@@ -174,7 +175,7 @@
           lhilf=iconfb(i,2)
           l=0
           do j=1,jhomob
-            if (vecchkb(j).eq.khilf) then 
+            if (vecchkb(j).eq.khilf) then
               do k=jhomob+1,na
                 l=l+1
                 if(vecchkb(k).eq.lhilf) then
@@ -192,10 +193,10 @@
 
       endif
 !! done sorting
-      
+
       ihilf=1
       do i = 1, nvec
-         if (ihilf.le.4.and.ihilf.gt.0) then 
+         if (ihilf.le.4.and.ihilf.gt.0) then
            ihilf=0
            write(29,'(a)',advance='yes') ' '
          endif
@@ -205,9 +206,9 @@
 
 ! now print Z/TDA vecs
 
-      if(itype.ne.2) then 
+      if(itype.ne.2) then
       !restricted
-        l=0 
+        l=0
         do j=1,jhomo
          if(vecchk(j).eq.0) then
 
@@ -281,7 +282,7 @@
           end do ! loop over virts-alpha
         endif
         end do ! loop over occs-alpha
-        
+
        ! beta
        l=0
        do j=1,jhomob
@@ -316,12 +317,12 @@
             endif
          end do ! llop over virts-beta
         endif
-       end do ! loop over occs-beta 
-       
+       end do ! loop over occs-beta
+
       endif ! check UKS/RKS
 
       end do ! loop over roots/nvec
-      
+
 
 
       if(ihilf.le.3.and.ihilf.gt.0) write(29,'(a)',advance='yes') ' '
@@ -333,13 +334,13 @@
 ! note the printout in stdout
       write(*,'(a)',advance='no') ' eigenvectors printed to '
       write(*,'(a)',advance='yes') trim(fname)
-     
+
       end
 
 
       subroutine printvecrpa(nci,nroot,uci,hci,eci)
       ! This routine prints out eigenvectors in TM format
-      integer, intent ( in ) :: nci,nroot       
+      integer, intent ( in ) :: nci,nroot
       real*4, intent ( in ) :: uci(nci,nci),hci(nci,nci),eci(nci)
       real*8 tmp
       integer i,j,ij,k,jhilf,ii,ihilf,jhomo,nvec,itype,nmo,na
@@ -357,7 +358,7 @@
         read(39,*) nvec,nmo,jhomo
         allocate(vecchk(nmo), iconf(nci,2),icsf(jhomo*(nmo-jhomo)),
      .         stat=i)
-        if(i.ne.0)stop 'allocation failed in printz' 
+        if(i.ne.0)stop 'allocation failed in printz'
         do i=1,nmo
           read(39,*) vecchk(i)
         enddo
@@ -365,12 +366,12 @@
           read(39,*) iconf(i,1),iconf(i,2)
         enddo
       else
-! unrestricted case 
+! unrestricted case
         read(39,*) nvec,nmo,jhomo
         read(39,*) nexa,nexb,jhomoa,jhomob
         na=nmo/2
         ij=jhomoa*(na-jhomoa)+jhomob*(na-jhomob)
-        allocate(vecchk(na), iconf(nexa,2),iconfb(nexb,2), 
+        allocate(vecchk(na), iconf(nexa,2),iconfb(nexb,2),
      .    vecchkb(na),icsf(jhomoa*(na-jhomoa)),icsfb(jhomob*(na-jhomob))
      .    , stat=i)
         if(i.ne.0)stop 'allocation failed in printz'
@@ -402,12 +403,12 @@
       open(unit=29,file=trim(fname),status='replace')
       write(29,'(a)',advance='yes') '$title'
       write(29,'(a)',advance='yes') '$symmetry c1'
-      write(29,'(a)',advance='no') '$tensor space dimension' 
+      write(29,'(a)',advance='no') '$tensor space dimension'
       if(itype.eq.2) then
         na=nmo/2
         ij=jhomoa*(na-jhomoa)+jhomob*(na-jhomob)
         write(29,'(x,i8)',advance='yes') ij
-      else 
+      else
         write(29,'(x,i8)',advance='yes') jhomo*(nmo-jhomo)
       endif
       select case(itype)
@@ -436,7 +437,7 @@
             if (vecchk(j).eq.ihilf) then
               do k=jhomo+1,nmo
                 l=l+1
-                if(vecchk(k).eq.jhilf) then   
+                if(vecchk(k).eq.jhilf) then
                   icsf(l)=i
 !                  l=l+nmo-k
                   exit
@@ -449,8 +450,8 @@
             endif
           enddo
         enddo
-      else 
-      !sort for unrestricted case 
+      else
+      !sort for unrestricted case
         icsfb=0
         do i=1,nexa
           ihilf=iconf(i,1)
@@ -467,7 +468,7 @@
                   exit
                 endif
               enddo
-!              l=l+(jhomoa-j)*(na-jhomoa) 
+!              l=l+(jhomoa-j)*(na-jhomoa)
               exit
             else
               l=l+na-jhomoa
@@ -480,7 +481,7 @@
           lhilf=iconfb(i,2)
           l=0
           do j=1,jhomob
-            if (vecchkb(j).eq.khilf) then 
+            if (vecchkb(j).eq.khilf) then
               do k=jhomob+1,na
                 l=l+1
                 if(vecchkb(k).eq.lhilf) then
@@ -498,10 +499,10 @@
 
       endif
 !! done sorting
-      
+
       ihilf=1
       do i = 1, nvec
-         if (ihilf.le.4.and.ihilf.gt.0) then 
+         if (ihilf.le.4.and.ihilf.gt.0) then
            ihilf=0
            write(29,'(a)',advance='yes') ' '
          endif
@@ -509,10 +510,10 @@
      &        eci(i)
 ! print RPA vec
 
-      if(itype.ne.2) then 
+      if(itype.ne.2) then
       !restricted
       !X+Y
-       l=0 
+       l=0
        do j=1,jhomo
          if(vecchk(j).eq.0) then
 
@@ -550,7 +551,7 @@
        end do ! loop over occs
 
        !X-Y
-       l=0 
+       l=0
        do j=1,jhomo
          if(vecchk(j).eq.0) then
 
@@ -626,7 +627,7 @@
           end do ! llop over virts-alpha
         endif
         end do ! loop over occs-alpha
-        
+
        ! beta
        l=0
        do j=1,jhomob
@@ -662,7 +663,7 @@
             endif
          end do ! llop over virts-beta
         endif
-       end do ! loop over occs-beta 
+       end do ! loop over occs-beta
        ! now X - Y , unrestricted
        l=0
        do j=1,jhomoa
@@ -701,7 +702,7 @@
           end do ! loop over virts-alpha
         endif
        end do ! loop over occs-alpha
-        
+
        ! beta
        l=0
        do j=1,jhomob
@@ -738,11 +739,11 @@
          end do ! llop over virts-beta
         endif
        end do ! loop over occs-beta
-       
+
       endif ! check UKS/RKS
 
       end do ! loop over roots/nvec
-      
+
 
 
       if(ihilf.le.3.and.ihilf.gt.0) write(29,'(a)',advance='yes') ' '
@@ -754,5 +755,5 @@
 ! note the printout in stdout
       write(*,'(a)',advance='no') ' eigenvectors printed to '
       write(*,'(a)',advance='yes') trim(fname)
-     
+
       end

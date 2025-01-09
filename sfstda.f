@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 
 ! written by Marc de Wegifosse 2018-2019
 
@@ -703,8 +704,9 @@ c just printout
      .             ,pija,ncent)
 
       deallocate(qija,gamj)
-
+      if(XsTD.eqv..false.)then
       deallocate(clowa)
+      endif
 !!! now beta part of qab !!!
 
       q2=0.0
@@ -725,8 +727,9 @@ c just printout
       enddo
 !$omp end do
 !$omp end parallel
-
+      if(XsTD.eqv..false.)then
       deallocate(clowb)
+      endif
 !!!!!PTselect, for spin-flip!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(*,*)
       write(*,*)'selecting CSF ...'
@@ -768,9 +771,14 @@ c allocate the TDA matrix
 c set the TDA matrix up                                                        *
       write(*,*)'calculating TDA matrix ...'
 ********************************************************************************
+      if(XsTD)then
+      call SF_Xstda_mat(nci,nexb,ncent,noa,nva,nob,nvb,maxconfb,iconfb,
+     .ax,edb,hci,betaj,xyz,nao,mocia,mocib,clowa,clowb,epsia,epsib)
+      else
       call sfstdamat(nci,nexb,ncent,noa,nob,nvb,
      .             maxconfb,iconfb,ax,edb,
      .             pija,qabb,hci)
+      endif
 ********************************************************************************
 
 

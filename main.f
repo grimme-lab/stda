@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
       program acis_prog
       use stdacommon ! mostly input and primitive data
       use kshiftcommon ! kshiftvariables
@@ -33,6 +34,10 @@
       integer imethod,inpchk,mform,nvec
       logical molden,da,chkinp,xtbinp
       integer, dimension(8) :: datetimevals
+      !!! libcint
+      double precision, allocatable :: overlap_AO(:),mu(:,:),mag(:,:)
+      double precision, allocatable :: velo(:,:),quadrupole(:,:)
+      real*8,allocatable :: help(:),help1(:),help2(:),help3(:)
 
       call date_and_time(VALUES=datetimevals)
       print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',
@@ -41,22 +46,37 @@
       write(*,'(//
      .          17x,''*********************************************'')')
       write(*,'(17x,''*                                           *'')')
-      write(*,'(17x,''*               s  T  D  A                  *'')')
+      write(*,'(17x,''*               s  t  d  2                  *'')')
       write(*,'(17x,''*                                           *'')')
       write(*,'(17x,''*                S. Grimme                  *'')')
       write(*,'(17x,''* Mulliken Center for Theoretical Chemistry *'')')
       write(*,'(17x,''*             Universitaet Bonn             *'')')
-      write(*,'(17x,''*              Version 1.6.3                *'')')
-      write(*,'(17x,''*       Fri Aug 26 14:28:49 CEST 2022       *'')')
+      write(*,'(17x,''*                                           *'')')
+      write(*,'(17x,''*             M. de Wergifosse              *'')')
+      write(*,'(17x,''*                MOST/IMCN                  *'')')
+      write(*,'(17x,''*     Universite Catholique de Louvain      *'')')
+      write(*,'(17x,''*                                           *'')')
+      write(*,'(17x,''*               Version 2.0                 *'')')
+      write(*,'(17x,''*     Tue 07 Jan 2025 09:09:41 AM CET       *'')')
       write(*,'(17x,''*********************************************'')')
       write(*,*)
-      write(*,'('' Please cite as:'')')
+      write(*,'('' Please cite:'')')
+      write(*,*)
+      write(*,'('' For sTDA and sTD-DFT,'')')
       write(*,'('' S. Grimme, J. Chem. Phys. 138 (2013) 244104'')')
-      write(*,'('' M. de Wergifosse, S. Grimme, J. Phys. Chem A'')')
-      write(*,'('' 125 (2021) 18 3841-3851'')')
+      write(*,'('' C. Bannwarth, S. Grimme Comput. Theor. Chem.
+     . 1040–1041 (2014) 45-53'')')
+      write(*,'('' M. de Wergifosse, S. Grimme, J. Phys. Chem A
+     . 125 (2021) 18 3841-3851'')')
+      write(*,*)
+      write(*,'('' For XsTDA and XsTD-DFT,'')')
+      write(*,'('' M. de Wergifosse, S. Grimme, J. Chem. Phys.
+     . 160 (2024) 204110'')')
+      write(*,'('' M. de Wergifosse, J. Phys. Chem. Lett. 15
+     . (2024) 51 12628–12635'')')
       write(*,*)
       write(*,'('' With contributions from:'')')
-      write(*,'('' C. Bannwarth, P. Shushkov, M. de Wergifosse'')')
+      write(*,'('' C. Bannwarth, P. Shushkov, P. Beaujean'')')
       write(*,*)
       write(*,'(a,a)')'===============================================',
      .                 '======================='
@@ -109,7 +129,14 @@ c read the tm2xx file, otherwise (-f option) the tm2molden file
       rw=.false.
       rw_dual=.false.
       pt_off=.false.
-      optrot=.false.
+      optrota=.false.
+      XsTD=.false.
+      cint=.true.
+      RSH_flag=.false.
+      SOS_2PA=.false.
+      Xcore=.false.
+      FULL2PA=.false.
+      multipole=.false.
 
 ! check for input file
       inquire(file='.STDA',exist=da)
@@ -218,6 +245,25 @@ c read the tm2xx file, otherwise (-f option) the tm2molden file
          num_trans=int(xx(1))
       endif
 
+      if(index(dummy,'-SOS2PA').ne.0)then ! Do response function
+         SOS_2PA=.true.
+         rpachk=.true.
+         call getarg(i+1,dummy)
+         call readl(79,dummy,xx,nn)
+         num_trans=int(xx(1))
+      endif
+
+      if(index(dummy,'-hxc2PA').ne.0)then ! Do response function
+         FULL2PA=.true.
+         rpachk=.true.
+         call getarg(i+1,dummy)
+         call readl(79,dummy,xx,nn)
+         num_trans=int(xx(1))
+         XsTD=.true.
+         write(*,*) 'hxc2PA, only with XsTD-DFT'
+         cint=.true.
+      endif
+
       if(index(dummy,'-s2s').ne.0)then ! Do response function
          ESA=.true.
          !rpachk=.true.
@@ -273,6 +319,310 @@ c read the tm2xx file, otherwise (-f option) the tm2molden file
          call getarg(i+1,dummy)
          call readl(79,dummy,xx,nn)
          Nnto=int(xx(1))
+      endif
+
+      if(index(dummy,'-XsTD').ne.0)then
+      XsTD=.true.
+      if(xtbinp.eqv..true.)stop 'xTB with XsTD is not implemented'
+      cint=.true.
+      write(*,*)'**********************'
+      write(*,*)'You choose to use XsTD'
+      write(*,*)'**********************'
+      !dokshift=.false.
+         if(rpachk.eqv..false.)then
+      write(*,*)'Velocity correction deactivated with XsTDA by default'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-libcintOFF').ne.0)then
+      cint=.false.
+      endif
+
+      if(index(dummy,'-CORE').ne.0)then
+      Xcore=.true.
+         call getarg(i+1,dummy)
+         call readl(79,dummy,xx,nn)
+         Ecore=int(xx(1))
+         call getarg(i+2,dummy)
+         call readl(79,dummy,xx,nn)
+         Ecore2=int(xx(1))
+      write(*,*)'Doing core to valence excitations'
+      write(*,*)'using an occupied space from'
+      write(*,*)Ecore, ' to ',Ecore2
+      endif
+!      if(index(dummy,'-RSH').ne.0)then ! Do range-separated hybrid only with XsTD
+!         RSH_flag=.true.
+!         XsTD=.true.
+!         cint=.true.
+!         dokshift=.false.
+!         call getarg(i+1,dummy)
+!         call readl(79,dummy,xx,nn)
+!         if(nn.gt.0) RSH=xx(1)
+!         call getarg(i+2,dummy)
+!         call readl(79,dummy,xx,nn)
+!         if(nn.gt.0) RSH_ax=xx(1)
+!         call getarg(i+3,dummy)
+!         call readl(79,dummy,xx,nn)
+!         if(nn.gt.0) RSH_beta=xx(1)
+!         call getarg(i+4,dummy)
+!         call readl(79,dummy,xx,nn)
+!         if(nn.gt.0) RSH_sub=xx(1)
+!         write(*,*)RSH_sub
+!         RSH_sub=.true.
+!         write(*,*)'Using a long-range corrected functional with XsTD'
+!         write(*,*)'Range-separated hybrid parameter is ', RSH,RSH_ax,
+!     .   RSH_beta,RSH_sub
+!      endif
+ 12   format(a,3f9.4,L)
+      if(index(dummy,'-CAMB3LYP').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.33d0
+         RSH2=RSH
+         RSH_ax=0.19d0
+         RSH_beta=0.46d0
+         RSH_sub=.true.
+         ax=0.38d0
+         alpha=0.9d0
+         beta=1.86d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using CAM-B3LYP with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'Velocity correction deactivated with XsTDA by default'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-wB97XD2').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.2d0
+         RSH2=RSH
+         RSH_ax=0.222d0
+         RSH_beta=0.888d0
+         RSH_sub=.true.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using wB97X-D with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'Velocity correction deactivated with XsTDA by default'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-wB97XD3').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.25d0
+         RSH2=RSH
+         RSH_ax=0.1957d0
+         RSH_beta=0.8043d0
+         RSH_sub=.true.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using wB97X-D3 with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'Velocity correction deactivated with XsTDA by default'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-wB97MV').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.3d0
+         RSH2=RSH
+         RSH_ax=0.15d0
+         RSH_beta=0.85d0
+         RSH_sub=.true.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using wB97MV with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'Velocity correction deactivated with XsTDA by default'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-Bvel').ne.0)then
+      velcorr=.true.
+      write(*,*)'Velocity correction asked for XsTDA'
+      endif
+
+      if(index(dummy,'-oldwB97XD3').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.25d0
+         RSH2=RSH
+         RSH_ax=0.1957d0
+         RSH_beta=1.0d0
+         RSH_sub=.false.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using oldwB97X-D3 with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'No velocity correction with XsTDA/RSH for the moment'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-oldwB97MV').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.3d0
+         RSH2=RSH
+         RSH_ax=0.15d0
+         RSH_beta=1.0d0
+         RSH_sub=.false.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using oldwB97MV with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'No velocity correction with XsTDA/RSH for the moment'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-oldwB97XD2').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH=0.2d0
+         RSH2=RSH
+         RSH_ax=0.222d0
+         RSH_beta=1.0d0
+         RSH_sub=.false.
+         ax=0.51d0
+         alpha=4.51d0
+         beta=8.0d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using oldwB97X-D with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'No velocity correction with XsTDA/RSH for the moment'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-SRC2R1').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH2=0.69d0 !short range mu
+         RSH=1.02d0  !long  range mu
+         RSH_ax=0.55d0
+         RSH_beta=0.08d0
+         RSH_sub=.false.
+         !B3LYP parameters for the CSF screening
+         ax=0.2d0
+         alpha=1.516d0
+         beta=0.566d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using SRC2-R1 with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'No velocity correction with XsTDA/RSH for the moment'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-SRC2R2').ne.0)then ! Do range-separated hybrid only with XsTD
+         RSH_flag=.true.
+         XsTD=.true.
+         cint=.true.
+         dokshift=.false.
+         RSH2=2.20d0 !short range mu
+         RSH=1.80d0  !long  range mu
+         RSH_ax=0.91d0
+         RSH_beta=0.28d0
+         RSH_sub=.false.
+         !B3LYP parameters for the CSF screening
+         ax=0.2d0
+         alpha=1.516d0
+         beta=0.566d0
+         write(*,*)'**********************'
+         write(*,*)'You choose to use XsTD'
+         write(*,*)'**********************'
+         write(*,*)'Using SRC2-R2 with XsTD'
+         write(*,12)'Range-separated hybrid parameters are ', RSH,
+     .   RSH_ax,RSH_beta,RSH_sub
+         if(rpachk.eqv..false.)then
+      write(*,*)'No velocity correction with XsTDA/RSH for the moment'
+         velcorr=.false.
+         endif
+      endif
+
+      if(index(dummy,'-intfull').ne.0)then
+      if(XsTD.eqv..true.)stop 'you cannot ask for full
+     .integrals and XsTD at the same time'
+      full=.true.
+      cint=.true.
+      rpachk=.true.
+      dokshift=.false.
+      endif
+
+      if(index(dummy,'-directintfull').ne.0)then
+      if(XsTD.eqv..true.)stop 'you cannot ask for full
+     .integrals and XsTD at the same time'
+      direct_full=.true.
+      cint=.true.
+      rpachk=.true.
+      dokshift=.false.
       endif
 
       if(index(dummy,'-chk').ne.0) chkinp=.true. ! do input check
@@ -397,9 +747,60 @@ ccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccc
 c precalculate primitive data
 ccccccccccccccccccccccccccccccccc
+      if(cint)then
+      write(*,*)'*****************************'
+      write(*,*)'*using libcint integral deck*'
+      write(*,*)'*****************************'
+      write(*,*) 'SIZEOF(int)', SIZEOF(nbf)
+      allocate(overlap_AO(nbf*(nbf+1)/2))
+      call overlap(ncent,nprims,nbf,overlap_AO)
+      allocate(mu(nbf*(nbf+1)/2,1:3))
+      call dipole_moment(ncent,nprims,nbf,mu)
+! unfortunately libcint does not give the same result for the magnetic moment.
+! thus, we still use the old integral deck for the magnetic moment
+!       allocate(mag(nbf*(nbf+1)/2,1:3))
+!       call magnetic_moment(ncent,nprims,nbf,mag)
+      call intslvm2(ncent,nmo,nbf,nprims)
+      nao=nbf
+      if(nao.eq.0)nao=nprims
+      allocate(velo(nbf*(nbf+1)/2,1:3))
+      call velo_moment(ncent,nprims,nbf,velo)
+      open(unit=40,file='sint', form='unformatted',status='replace')
+      open(unit=31,file='xlint',form='unformatted',status='replace')
+      open(unit=32,file='ylint',form='unformatted',status='replace')
+      open(unit=33,file='zlint',form='unformatted',status='replace')
+!       open(unit=34,file='xmint',form='unformatted',status='replace')
+!       open(unit=35,file='ymint',form='unformatted',status='replace')
+!       open(unit=36,file='zmint',form='unformatted',status='replace')
+      open(unit=37,file='xvint',form='unformatted',status='replace')
+      open(unit=38,file='yvint',form='unformatted',status='replace')
+      open(unit=39,file='zvint',form='unformatted',status='replace')
+      write(40)overlap_AO
+      close(40)
+      write(31)mu(:,1)
+      write(32)mu(:,2)
+      write(33)mu(:,3)
+      close(31)
+      close(32)
+      close(33)
+!       write(34)mag(:,1)
+!       write(35)mag(:,2)
+!       write(36)mag(:,3)
+!       close(34)
+!       close(35)
+!       close(36)
+      write(37)velo(:,1)
+      write(38)velo(:,2)
+      write(39)velo(:,3)
+      close(37)
+      close(38)
+      close(39)
+      deallocate(overlap_AO,mu,velo)
+      else
       call intslvm(ncent,nmo,nbf,nprims)
       nao=nbf
       if(nao.eq.0)nao=nprims
+      endif
 
 
 
@@ -443,11 +844,8 @@ ccccccccccccccccccccccccccccccccc
  21   format(3i10,3x,2f24.9)
 
  11   format(3i5,2f9.4)
-      if(rw_dual)then
+
       deallocate(ipty,exip,cxip,atnam,eta)
-      else
-      deallocate(ipat,ipty,ipao,exip,cxip,atnam,eta)
-      endif
 
 
 cccccccccccccccccccccccccccccccccccccc
@@ -521,21 +919,21 @@ ccccccccccccccccccccccccccccccccc
       if (imethod.eq.1) then
       if(rw)then
       call stda_rw(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
-     .        thrp,ax,alpha,beta,ptlim,nvec)
+     .        thrp,ax,alpha,beta,ptlim,nvec,nprims)
       else
       if(rw_dual)then
       call stda_rw_dual(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
      .        thrp,ax,alpha,beta,ptlim,nvec,ipat,ipao,nprims)
-      deallocate(ipat,ipao)
       else
       call stda(ncent,nmo,nao,xyz,cc,eps,occ,iaoat,thre,
-     .        thrp,ax,alpha,beta,ptlim,nvec)
+     .        thrp,ax,alpha,beta,ptlim,nvec,nprims)
       endif
       endif
       else
       call sutda(ncent,nmo,nao,xyz,cc,eps,occ,ccspin,iaoat,thre,
      .           thrp,ax,alpha,beta,ptlim,nvec)
       endif
+      deallocate(ipat,ipao)
 
       call date_and_time(VALUES=datetimevals)
       print '(I0,"-",I0,"-",I0,1X,I0,":",I0,":",I0,".",I3)',

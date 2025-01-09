@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 module precision
 
 ! Real kinds
@@ -43,21 +44,21 @@ private :: value_dr,value_sr,value_di,value_si
 private :: write_dr,write_sr,write_di,write_si
 private :: writeq_dr,writeq_sr,writeq_di,writeq_si
 
-interface value  ! Generic operator for converting a number string to a 
-                 ! number. Calling syntax is 'call value(numstring,number,ios)' 
-                 ! where 'numstring' is a number string and 'number' is a 
-                 ! real number or an integer (single or double precision).         
+interface value  ! Generic operator for converting a number string to a
+                 ! number. Calling syntax is 'call value(numstring,number,ios)'
+                 ! where 'numstring' is a number string and 'number' is a
+                 ! real number or an integer (single or double precision).
    module procedure value_dr
    module procedure value_sr
    module procedure value_di
    module procedure value_si
 end interface
 
-interface writenum  ! Generic  interface for writing a number to a string. The 
+interface writenum  ! Generic  interface for writing a number to a string. The
                     ! number is left justified in the string. The calling syntax
                     ! is 'call writenum(number,string,format)' where 'number' is
                     ! a real number or an integer, 'string' is a character string
-                    ! containing the result, and 'format' is the format desired, 
+                    ! containing the result, and 'format' is the format desired,
                     ! e.g., 'e15.6' or 'i5'.
    module procedure write_dr
    module procedure write_sr
@@ -68,7 +69,7 @@ end interface
 interface writeq  ! Generic interface equating a name to a numerical value. The
                   ! calling syntax is 'call writeq(unit,name,value,format)' where
                   ! unit is the integer output unit number, 'name' is the variable
-                  ! name, 'value' is the real or integer value of the variable, 
+                  ! name, 'value' is the real or integer value of the variable,
                   ! and 'format' is the format of the value. The result written to
                   ! the output unit has the form <name> = <value>.
    module procedure writeq_dr
@@ -100,7 +101,7 @@ call compact(str)
 na=size(args)
 do i=1,na
   args(i)=' '
-end do  
+end do
 nargs=0
 lenstr=len_trim(str)
 if(lenstr==0) return
@@ -111,7 +112,7 @@ do
    nargs=nargs+1
    call split(str,delims,args(nargs))
    call removebksl(args(nargs))
-end do   
+end do
 str=strsav
 
 end subroutine parse
@@ -136,23 +137,23 @@ k=0
 do i=1,lenstr
   ch=str(i:i)
   ich=iachar(ch)
-  
+
   select case(ich)
-  
+
     case(9,32)     ! space or tab character
       if(isp==0) then
         k=k+1
         outstr(k:k)=' '
       end if
       isp=1
-      
+
     case(33:)      ! not a space, quote, or control character
       k=k+1
       outstr(k:k)=ch
       isp=0
-      
+
   end select
-  
+
 end do
 
 str=adjustl(outstr)
@@ -177,10 +178,10 @@ k=0
 do i=1,lenstr
   ch=str(i:i)
   ich=iachar(ch)
-  select case(ich)    
+  select case(ich)
     case(0:32)  ! space, tab, or control character
-         cycle       
-    case(33:)  
+         cycle
+    case(33:)
       k=k+1
       outstr(k:k)=ch
   end select
@@ -218,7 +219,7 @@ subroutine value_sr(str,rnum,ios)
 
 character(len=*)::str
 real(kr4) :: rnum
-real(kr8) :: rnumd 
+real(kr8) :: rnumd
 
 call value_dr(str,rnumd,ios)
 if( abs(rnumd) > huge(rnum) ) then
@@ -271,10 +272,10 @@ end subroutine value_si
 !**********************************************************************
 
 subroutine shiftstr(str,n)
- 
+
 ! Shifts characters in in the string 'str' n positions (positive values
 ! denote a right shift and negative values denote a left shift). Characters
-! that are shifted off the end are lost. Positions opened up by the shift 
+! that are shifted off the end are lost. Positions opened up by the shift
 ! are replaced by spaces.
 
 character(len=*):: str
@@ -286,7 +287,7 @@ if(nabs>=lenstr) then
   return
 end if
 if(n<0) str=str(nabs+1:)//repeat(' ',nabs)  ! shift left
-if(n>0) str=repeat(' ',nabs)//str(:lenstr-nabs)  ! shift right 
+if(n>0) str=repeat(' ',nabs)//str(:lenstr-nabs)  ! shift right
 return
 
 end subroutine shiftstr
@@ -295,9 +296,9 @@ end subroutine shiftstr
 
 subroutine insertstr(str,strins,loc)
 
-! Inserts the string 'strins' into the string 'str' at position 'loc'. 
+! Inserts the string 'strins' into the string 'str' at position 'loc'.
 ! Characters in 'str' starting at position 'loc' are shifted right to
-! make room for the inserted string. Trailing spaces of 'strins' are 
+! make room for the inserted string. Trailing spaces of 'strins' are
 ! removed prior to insertion
 
 character(len=*):: str,strins
@@ -329,7 +330,7 @@ if(ipos == 1) then
    str=str(lensubstr+1:)
 else
    str=str(:ipos-1)//str(ipos+lensubstr:)
-end if   
+end if
 return
 
 end subroutine delsubstr
@@ -352,7 +353,7 @@ do
    else
       str=str(:ipos-1)//str(ipos+lensubstr:)
    end if
-end do   
+end do
 return
 
 end subroutine delall
@@ -367,7 +368,7 @@ character (len=*):: str
 character (len=len_trim(str)):: ucstr
 
 ilen=len_trim(str)
-ioffset=iachar('A')-iachar('a')     
+ioffset=iachar('A')-iachar('a')
 iquote=0
 ucstr=str
 do i=1,ilen
@@ -436,7 +437,7 @@ subroutine readline(nunitr,line,ios)
 
 character (len=*):: line
 
-do  
+do
   read(nunitr,'(a)', iostat=ios) line      ! read input line
   if(ios /= 0) return
   line=adjustl(line)
@@ -503,7 +504,7 @@ end do
 if(isum /= 0) then
    write(*,*) delim1,' has no matching delimiter'
    return
-end if   
+end if
 imatch=i
 
 return
@@ -593,7 +594,7 @@ endif
 lstr=len_trim(str)
 do i=lstr,1,-1
    ch=str(i:i)
-   if(ch=='0') cycle          
+   if(ch=='0') cycle
    if(ch=='.') then
       str=str(1:i)//'0'
       if(ipos>0) str=trim(str)//trim(exp)
@@ -717,9 +718,9 @@ subroutine split(str,delims,before,sep)
 ! Routine finds the first instance of a character from 'delims' in the
 ! the string 'str'. The characters before the found delimiter are
 ! output in 'before'. The characters after the found delimiter are
-! output in 'str'. The optional output character 'sep' contains the 
-! found delimiter. A delimiter in 'str' is treated like an ordinary 
-! character if it is preceded by a backslash (\). If the backslash 
+! output in 'str'. The optional output character 'sep' contains the
+! found delimiter. A delimiter in 'str' is treated like an ordinary
+! character if it is preceded by a backslash (\). If the backslash
 ! character is desired in 'str', then precede it with another backslash.
 
 character(len=*) :: str,delims,before
@@ -749,7 +750,7 @@ do i=1,lenstr
       ibsl=1
       cycle
    end if
-   ipos=index(delims,ch)         
+   ipos=index(delims,ch)
    if(ipos == 0) then          ! character is not a delimiter
       k=k+1
       before(k:k)=ch
@@ -817,6 +818,4 @@ end subroutine removebksl
 
 !**********************************************************************
 
-end module strings  
-
-
+end module strings

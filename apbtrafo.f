@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 ccccccccccccccccccccccccccccccccccc
 ! Correct TDA eigenvector for Rv  c
 !      (A+0.5*B)/omega * X        c
@@ -45,7 +46,7 @@ ccccccccccccccccccccccccccccccccccc
 
 ************** read B matrix (packed) **************************
       open(unit=52,file='bmat',form='unformatted',status='old')
-      read(52)bmat      
+      read(52)bmat
       close(52,status='delete')
 ******************************************************************
 
@@ -54,12 +55,12 @@ ccccccccccccccccccccccccccccccccccc
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
-      call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)      
+      call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)
       deallocate(upper)
 ******************************************************************
 !
 !******************** scale with omega_TDA ************************
-!   compute divide by omega_TDA to yield  X_new 
+!   compute divide by omega_TDA to yield  X_new
       do i=1,nroot
          ef=1.0d0/(dble(e(i))+1.0d-8)
          do j=1,n
@@ -68,7 +69,7 @@ ccccccccccccccccccccccccccccccccccc
       enddo
 !******************************************************************
 !
-!!! OLD ORTHOGONALIZATION PART - NOT USED ANYMORE 
+!!! OLD ORTHOGONALIZATION PART - NOT USED ANYMORE
 !
 ************** compute overlap: S = (X_new)**T * (X_new) *********
 !      allocate(upper(nroot,nroot))
@@ -89,7 +90,7 @@ ccccccccccccccccccccccccccccccccccc
 !******************************************************************
 !!
 !************** orthogonalize vector: X' = X_new * U**-1 **********
-!      call strsm('R','U','N','N',n, nroot,1.0,upper,nroot,xnew,n)    
+!      call strsm('R','U','N','N',n, nroot,1.0,upper,nroot,xnew,n)
 !*****************************************************************
 !
 !*********** check orthogonality *****************
@@ -97,7 +98,7 @@ ccccccccccccccccccccccccccccccccccc
 !         upper=0.0
 !         call sgemm('T','n',nroot,nroot,n,1.0,xnew,n,xnew,n,0.0,
 !     .              upper,nroot)
-!         
+!
 !
 !         do i=1,min(12,nroot)
 !          write(*,'(12f10.6)') (upper(j,i),j=1,min(12,nroot))
@@ -170,7 +171,7 @@ ccccccccccccccccccccccccccccccccccc
         write(27,*)'SHIFT'
         write(27,*)' 0.00'
         write(27,*)'DATXY'
-      endif 
+      endif
 
       p23=ak* 2.0d0/3.0d0
       do i=1,nroot
@@ -179,7 +180,7 @@ ccccccccccccccccccccccccccccccccccc
          ef=1.0d0/(de+1.0d-8)
 ! damp exponent from -1 to 0 for small energies
          hilf=1.0d0-exp(-150.0d0*de*de)
-         efmod=1.0d0/((de**hilf)+1.0d-8) 
+         efmod=1.0d0/((de**hilf)+1.0d-8)
          xlp=0.0d0
          ylp=0.0d0
          zlp=0.0d0
@@ -217,18 +218,18 @@ ccccccccccccccccccccccccccccccccccc
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
            ij=lin8(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xl(ij)*uold
            ylp=ylp+yl(ij)*uold
            zlp=zlp+zl(ij)*uold
-           xvp=xvp+xv(ij)*uold 
+           xvp=xvp+xv(ij)*uold
            yvp=yvp+yv(ij)*uold
            zvp=zvp+zv(ij)*uold
            xmp=xmp+xm(ij)*uold
            ymp=ymp+ym(ij)*uold
-           zmp=zmp+zm(ij)*uold          
-           xvp2=xvp2+xv(ij)*unew 
-           yvp2=yvp2+yv(ij)*unew 
+           zmp=zmp+zm(ij)*uold
+           xvp2=xvp2+xv(ij)*unew
+           yvp2=yvp2+yv(ij)*unew
            zvp2=zvp2+zv(ij)*unew
            xmp2=xmp2+xm(ij)*unew
            ymp2=ymp2+ym(ij)*unew
@@ -284,7 +285,7 @@ ccccccccccccccccccccccccccccccccccc
              write(26,'(i4,F10.4,4f13.6)')i,de*27.21139,fly,fvy,rly,rvy
              write(27,'(i4,F10.4,4f13.6)')i,de*27.21139,flz,fvz,rlz,rvz
            endif
-      enddo     
+      enddo
       close(28)
       if(aniso)then
         close(25)
@@ -292,7 +293,7 @@ ccccccccccccccccccccccccccccccccccc
         close(27)
         write(*,*)'data given such that f = (f_x + f_y + f_z)/3'
         write(*,*)'                 and R = R_x + R_y + R_z'
-      endif 
+      endif
       deallocate(xnew)
       end subroutine apbtrafo
 
@@ -346,7 +347,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
 
 ************** read 0.5*B matrix (packed) ***********************
       open(unit=52,file='bmat',form='unformatted',status='old')
-      read(52)bmat      
+      read(52)bmat
       close(52,status='delete')
 ******************************************************************
 
@@ -355,12 +356,12 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
-      call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)      
+      call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)
       deallocate(upper)
 ******************************************************************
 !
 ******************** scale with omega_TDA ************************
-!   divide by omega_TDA to yield  X_new 
+!   divide by omega_TDA to yield  X_new
       do i=1,nroot
          ef=1.0d0/(dble(e(i))+1.0d-8)
          do j=1,n
@@ -386,7 +387,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
 !******************************************************************
 !!
 !************** orthogonalize vector: X' = X_new * U**-1 **********
-!      call strsm('R','U','N','N',n, nroot,1.0,upper,nroot,xnew,n)    
+!      call strsm('R','U','N','N',n, nroot,1.0,upper,nroot,xnew,n)
 !******************************************************************
 !!
 !*********** check orthogonality *****************
@@ -394,7 +395,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
 !!         upper=0.0
 !!         call sgemm('T','n',nroot,nroot,n,1.0,xnew,n,xnew,n,0.0,
 !!     .              upper,nroot)
-!!         
+!!
 !!
 !!         do i=1,min(12,nroot)
 !!          write(*,'(12f10.6)') (upper(j,i),j=1,min(12,nroot))
@@ -422,7 +423,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       write(28,*)'SHIFT'
       write(28,*)' 0.00'
       write(28,*)'DATXY'
-     
+
       p23=2.0d0/3.0d0
       do i=1,nroot
 ! A+B transformed stuff
@@ -469,12 +470,12 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
            ij=lin8(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xla(ij)*uold
            ylp=ylp+yla(ij)*uold
-           zlp=zlp+zla(ij)*uold          
-           xvp=xvp+xva(ij)*uold 
-           yvp=yvp+yva(ij)*uold 
+           zlp=zlp+zla(ij)*uold
+           xvp=xvp+xva(ij)*uold
+           yvp=yvp+yva(ij)*uold
            zvp=zvp+zva(ij)*uold
            xmp=xmp+xma(ij)*uold
            ymp=ymp+yma(ij)*uold
@@ -494,11 +495,11 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
            unew=dble(xnew(k,i))
            uold=dble(x(k,i))
            ij=lin8(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xlb(ij)*uold
            ylp=ylp+ylb(ij)*uold
            zlp=zlp+zlb(ij)*uold
-           xvp=xvp+xvb(ij)*uold 
+           xvp=xvp+xvb(ij)*uold
            yvp=yvp+yvb(ij)*uold
            zvp=zvp+zvb(ij)*uold
            xmp=xmp+xmb(ij)*uold
@@ -560,7 +561,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
              write(26,'(i4,F10.4,4f13.6)')i,de*27.21139,fly,fvy,rly,rvy
              write(29,'(i4,F10.4,4f13.6)')i,de*27.21139,flz,fvz,rlz,rvz
            endif
-      enddo     
+      enddo
       close(28)
       if(aniso)then
         close(25)
@@ -568,7 +569,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
         close(29)
         write(*,*)'data given such that f = (f_x + f_y + f_z)/3'
         write(*,*)'                 and R = R_x + R_y + R_z'
-      endif 
+      endif
       deallocate(xnew)
       end subroutine apbtrafo_uks
 
@@ -595,9 +596,9 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       if(ierr.ne.0)stop 'allocation for qkj/bmat crashed'
       ak=real(dak)
       ax=real(dax)
-! calculate 0.5*B 
+! calculate 0.5*B
       bmat=0.0e0
-      fact=0.50d0 ! this is the scaling of the B-contribution 
+      fact=0.50d0 ! this is the scaling of the B-contribution
       open(unit=52,file='bmat',form='unformatted',status='replace')
       ij=0
 !$omp parallel private(ij,i,j,io,iv,jo,jv,iiv,iwrk,jjv,jwrk,qk,qj,ek,ej)
@@ -623,11 +624,11 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
               bmat(ij)=bmat(ij)-fact*ax*ek ! scaled by ax
            enddo
            ij=lin8(i,i)
-           ek=sdot(ncent,qk,1,qia(1,iwrk),1) 
+           ek=sdot(ncent,qk,1,qia(1,iwrk),1)
            bmat(ij)=fact*(ak*ek-ax*ek) ! diagonal element of 0.5*B
       enddo
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
       write(52)bmat
       close(52)
       deallocate(bmat,qk,qj)
@@ -639,7 +640,7 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
 
 
 ***********************************************************************
-* set up 0.5*B  (packed form) in UKS case ! 
+* set up 0.5*B  (packed form) in UKS case !
 ***********************************************************************
        subroutine utdacorr(nexa,nexb,ncent,noa,nva,nob,nvb,mxcnfa,
      .                    mxcnfb,iconfa,iconfb,dax,piaa,qiaa,
@@ -665,8 +666,8 @@ c     blow up symmetric matrix to its lower (upper in Lapack) triangular form
       allocate(qj(ncent),qk(ncent),bmat(ij), stat=ierr)
       if(ierr.ne.0)stop 'allocation for qkj/bmat crashed'
       ax=real(dax)
-! calculate 0.5*B 
-      fact=0.50e0 ! this is the scaling of the B-contribution 
+! calculate 0.5*B
+      fact=0.50e0 ! this is the scaling of the B-contribution
       bmat=0.0e0
       open(unit=52,file='bmat',form='unformatted',status='replace')
       ij=0
@@ -691,7 +692,7 @@ c alpha-alpha block
             qj(1:ncent)=piaa(1:ncent,jwrk)
             jwrk=(jo-1)*nva+iiv
             ek=sdot(ncent,qj,1,qiaa(1,jwrk),1) ! now ek = (ib|aj), results from Fock-exchange, thus we scale by ax
-            bmat(ij)=bmat(ij)-fact*ax*ek 
+            bmat(ij)=bmat(ij)-fact*ax*ek
          enddo
          ij=lin8(i,i)
          ek=sdot(ncent,qk,1,qiaa(1,iwrk),1)
@@ -726,7 +727,7 @@ c alpha-alpha block
             jv=iconfb(j-nexa,2)
             jjv=jv-nob
             jwrk=(jo-1)*nvb + jjv
-            ek=sdot(ncent,qk,1,qiab(1,jwrk),1)            
+            ek=sdot(ncent,qk,1,qiab(1,jwrk),1)
             bmat(ij)=(fact)*ek
             jwrk=(io-1)*nvb+jjv
             qj(1:ncent)=piab(1:ncent,jwrk)
@@ -740,7 +741,7 @@ c alpha-alpha block
       enddo
 !$omp end do
 !$omp end parallel
-!      call prmat4(6,bmat,nexa+nexb,0,'A+ 0.5 * B')           
+!      call prmat4(6,bmat,nexa+nexb,0,'A+ 0.5 * B')
       write(52)bmat
       close(52)
       deallocate(bmat,qj,qk)
@@ -778,7 +779,7 @@ cccccccccccccccccccccccccccccccccccccc
 
 ************** read B matrix (packed) **************************
       open(unit=52,file='bmat',form='unformatted',status='old')
-      read(52)bmat      
+      read(52)bmat
       close(52,status='delete')
 ******************************************************************
 
@@ -787,12 +788,12 @@ cccccccccccccccccccccccccccccccccccccc
       call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
       deallocate(bmat)
       allocate(xnew(n,nroot))
-      call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)      
+      call ssymm('l','u',n,nroot,1.0e0,upper,n,x,n,0.e0,xnew,n)
       deallocate(upper)
 ******************************************************************
 !
 !******************** scale with omega_TDA ************************
-!   compute divide by omega_TDA to yield  X_new 
+!   compute divide by omega_TDA to yield  X_new
       do i=1,nroot
          ef=1.0d0/(dble(e(i))+1.0d-8)
          do j=1,n
@@ -800,7 +801,7 @@ cccccccccccccccccccccccccccccccccccccc
          enddo
       enddo
 !******************************************************************
-        
+
       write(*,*)' writing trafoed spectral data to tda.dat ...'
       open(unit=28,file='tda.dat',status='replace')
       write(28,*)'NM'
@@ -862,7 +863,7 @@ cccccccccccccccccccccccccccccccccccccc
         write(29,*)'SHIFT'
         write(29,*)' 0.00'
         write(29,*)'DATXY'
-      endif 
+      endif
 
       allocate(q1(ncent))
       q1=0.0e0
@@ -875,7 +876,7 @@ cccccccccccccccccccccccccccccccccccccc
          ef=1.0d0/(de+1.0d-8)
 ! damp exponent from -1 to 0 for small energies
          hilf=1.0d0-exp(-150.0d0*de*de)
-         efmod=1.0d0/((de**hilf)+1.0d-8) 
+         efmod=1.0d0/((de**hilf)+1.0d-8)
          xlp=0.0d0
          ylp=0.0d0
          zlp=0.0d0
@@ -894,9 +895,9 @@ cccccccccccccccccccccccccccccccccccccc
          zmp2=0.0d0
          xvp2=0.0d0
          yvp2=0.0d0
-         zvp2=0.0d0  
+         zvp2=0.0d0
          xms=0.0d0
-         yms=0.0d0 
+         yms=0.0d0
          zms=0.0d0
          xmu=0.0d0
          ymu=0.0d0
@@ -923,18 +924,18 @@ cccccccccccccccccccccccccccccccccccccc
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
            ij=lin(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xl(ij)*uold
            ylp=ylp+yl(ij)*uold
            zlp=zlp+zl(ij)*uold
-           xvp=xvp+xv(ij)*uold 
+           xvp=xvp+xv(ij)*uold
            yvp=yvp+yv(ij)*uold
            zvp=zvp+zv(ij)*uold
            xmp=xmp+xm(ij)*uold
            ymp=ymp+ym(ij)*uold
-           zmp=zmp+zm(ij)*uold          
-           xvp2=xvp2+xv(ij)*unew 
-           yvp2=yvp2+yv(ij)*unew 
+           zmp=zmp+zm(ij)*uold
+           xvp2=xvp2+xv(ij)*unew
+           yvp2=yvp2+yv(ij)*unew
            zvp2=zvp2+zv(ij)*unew
            xmp2=xmp2+xm(ij)*unew
            ymp2=ymp2+ym(ij)*unew
@@ -1030,7 +1031,7 @@ cccccccccccccccccccccccccccccccccccccc
              write(26,'(i4,F10.4,4f13.6)')i,de*27.21139,fly,fvy,rly,rvy
              write(29,'(i4,F10.4,4f13.6)')i,de*27.21139,flz,fvz,rlz,rvz
            endif
-      enddo     
+      enddo
       close(28)
       if(aniso)then
         close(25)
@@ -1038,7 +1039,7 @@ cccccccccccccccccccccccccccccccccccccc
         close(29)
         write(*,*)'data given such that f = (f_x + f_y + f_z)/3'
         write(*,*)'                 and R = R_x + R_y + R_z'
-      endif 
+      endif
       deallocate(xnew,q1)
 
       end subroutine apbtrafoexc
@@ -1047,53 +1048,53 @@ cccccccccccccccccccccccccccccccccccccc
      . ,zva,xma,yma,zma,xlb,ylb,zlb,xvb,yvb,zvb,xmb,ymb,zmb,xmss
      . ,noa,nva,nob,nvb,coc,ncent,qiaa,qiab,maxconfa,maxconfb,iconfa
      . ,iconfb,rvpout)
-      use commonlogicals 
-      implicit none                                                    
-      integer, intent ( in ) :: maxconfa,maxconfb,n,na,nb,nroot        
+      use commonlogicals
+      implicit none
+      integer, intent ( in ) :: maxconfa,maxconfb,n,na,nb,nroot
       integer, intent ( in ) :: ncent,noa,nva,nob,nvb
-      integer, intent ( in ) :: iconfa(maxconfa,2),iconfb(maxconfb,2)  
-      real*8, intent(in) :: xla(*),yla(*),zla(*)                       
-      real*8, intent(in) :: xva(*),yva(*),zva(*)                       
-      real*8, intent(in) :: xma(*),yma(*),zma(*)                       
-      real*8, intent(in) :: xlb(*),ylb(*),zlb(*)                       
-      real*8, intent(in) :: xvb(*),yvb(*),zvb(*)                       
-      real*8, intent(in) :: xmb(*),ymb(*),zmb(*)                       
-      real*4, intent(in) :: x(n,n),e(n),qiaa(ncent,na),qiab(ncent,nb)   
-      real*8, intent(in) :: xmss,coc(3)                                
-      real*8, intent( out ) :: rvpout(nroot)                           
-                                                                       
-      integer i,j,k,l,ij,io,iv,lin                                     
-      real*8 de,ef,xp,xlp,ylp,zlp,xvp,yvp,zvp,xmp,ymp,zmp              
+      integer, intent ( in ) :: iconfa(maxconfa,2),iconfb(maxconfb,2)
+      real*8, intent(in) :: xla(*),yla(*),zla(*)
+      real*8, intent(in) :: xva(*),yva(*),zva(*)
+      real*8, intent(in) :: xma(*),yma(*),zma(*)
+      real*8, intent(in) :: xlb(*),ylb(*),zlb(*)
+      real*8, intent(in) :: xvb(*),yvb(*),zvb(*)
+      real*8, intent(in) :: xmb(*),ymb(*),zmb(*)
+      real*4, intent(in) :: x(n,n),e(n),qiaa(ncent,na),qiab(ncent,nb)
+      real*8, intent(in) :: xmss,coc(3)
+      real*8, intent( out ) :: rvpout(nroot)
+
+      integer i,j,k,l,ij,io,iv,lin
+      real*8 de,ef,xp,xlp,ylp,zlp,xvp,yvp,zvp,xmp,ymp,zmp
       real*8 xmu,ymu,zmu,xvu,yvu,zvu,xms,yms,zms
-      real*8 xvp2,yvp2,zvp2,xmp2,ymp2,zmp2,hilf,efmod 
-      real*8 flp,fvp,rlp,rvp,p23,fact,unew,uold !,enew(nroot)          
+      real*8 xvp2,yvp2,zvp2,xmp2,ymp2,zmp2,hilf,efmod
+      real*8 flp,fvp,rlp,rvp,p23,fact,unew,uold !,enew(nroot)
       real*8 flx,fly,flz,fvx,fvy,fvz,rlx,rly,rlz,rvx,rvy,rvz ! resolved along the three orientations
-      real*4, allocatable :: bmat(:),upper(:,:), xnew(:,:),q1(:)      
+      real*4, allocatable :: bmat(:),upper(:,:), xnew(:,:),q1(:)
       write(*,'(A)',advance='yes') '  perform velo correction for X...'
-      rvpout=0.0d0                                                     
-                                                                       
-      allocate(bmat(n*(n+1)/2))                                        
-                                                                       
-************** read 0.5*B matrix (packed) ***********************      
-      open(unit=52,file='bmat',form='unformatted',status='old')        
-      read(52)bmat                                                     
-      close(52,status='delete')                                        
-******************************************************************     
-                                                                       
-************** blow up 0.5*B and compute (0.5*B)*X ***************     
-      allocate(upper(n,n))                                             
-      call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle                                                                                                                                                                                           
-      deallocate(bmat)                                                 
-      allocate(xnew(n,nroot))                                          
-      call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)         
-      deallocate(upper)                                                
-******************************************************************     
-!                                                                      
-******************** scale with omega_TDA ************************     
-!   divide by omega_TDA to yield  X_new                                
-      do i=1,nroot                                                     
-         ef=1.0d0/(dble(e(i))+1.0d-8)                                  
-         do j=1,n                                                      
+      rvpout=0.0d0
+
+      allocate(bmat(n*(n+1)/2))
+
+************** read 0.5*B matrix (packed) ***********************
+      open(unit=52,file='bmat',form='unformatted',status='old')
+      read(52)bmat
+      close(52,status='delete')
+******************************************************************
+
+************** blow up 0.5*B and compute (0.5*B)*X ***************
+      allocate(upper(n,n))
+      call spack2tri(n,bmat,upper) ! blow up matrix, but we only need upper triangle
+      deallocate(bmat)
+      allocate(xnew(n,nroot))
+      call ssymm('l','u',n,nroot,1.e0,upper,n,x,n,0.e0,xnew,n)
+      deallocate(upper)
+******************************************************************
+!
+******************** scale with omega_TDA ************************
+!   divide by omega_TDA to yield  X_new
+      do i=1,nroot
+         ef=1.0d0/(dble(e(i))+1.0d-8)
+         do j=1,n
             xnew(j,i)=ef*xnew(j,i)
          enddo
       enddo
@@ -1117,7 +1118,7 @@ cccccccccccccccccccccccccccccccccccccc
 
       allocate(q1(ncent))
       q1=0.0e0
-     
+
       p23=2.0d0/3.0d0
       do i=1,nroot
 ! A+B transformed stuff
@@ -1165,12 +1166,12 @@ cccccccccccccccccccccccccccccccccccccc
            unew=dble(xnew(j,i))
            uold=dble(x(j,i))
            ij=lin(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xla(ij)*uold
            ylp=ylp+yla(ij)*uold
-           zlp=zlp+zla(ij)*uold          
-           xvp=xvp+xva(ij)*uold 
-           yvp=yvp+yva(ij)*uold 
+           zlp=zlp+zla(ij)*uold
+           xvp=xvp+xva(ij)*uold
+           yvp=yvp+yva(ij)*uold
            zvp=zvp+zva(ij)*uold
            xmp=xmp+xma(ij)*uold
            ymp=ymp+yma(ij)*uold
@@ -1192,11 +1193,11 @@ cccccccccccccccccccccccccccccccccccccc
            unew=dble(xnew(k,i))
            uold=dble(x(k,i))
            ij=lin(io,iv)
-! A+B transformed stuff 
+! A+B transformed stuff
            xlp=xlp+xlb(ij)*uold
            ylp=ylp+ylb(ij)*uold
            zlp=zlp+zlb(ij)*uold
-           xvp=xvp+xvb(ij)*uold 
+           xvp=xvp+xvb(ij)*uold
            yvp=yvp+yvb(ij)*uold
            zvp=zvp+zvb(ij)*uold
            xmp=xmp+xmb(ij)*uold
@@ -1281,7 +1282,7 @@ cccccccccccccccccccccccccccccccccccccc
              write(26,'(i4,F10.4,4f13.6)')i,de*27.21139,fly,fvy,rly,rvy
              write(29,'(i4,F10.4,4f13.6)')i,de*27.21139,flz,fvz,rlz,rvz
            endif
-      enddo     
+      enddo
       close(28)
       if(aniso)then
         close(25)
@@ -1289,8 +1290,6 @@ cccccccccccccccccccccccccccccccccccccc
         close(29)
         write(*,*)'data given such that f = (f_x + f_y + f_z)/3'
         write(*,*)'                 and R = R_x + R_y + R_z'
-      endif 
+      endif
       deallocate(xnew,q1)
       end subroutine apbtrafoexc_uks
-
-
