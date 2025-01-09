@@ -1,23 +1,24 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
       SUBROUTINE pckao(NPR,NAO,A,B)
       use stdacommon
-      IMPLICIT REAL*8(A-H,O-Z)                                                  
+      IMPLICIT REAL*8(A-H,O-Z)
       integer*8 ij,kl,k,iaa,iii
 
       dimension a(*),b(*)
@@ -27,7 +28,7 @@
       do i=1,npr
          do j=1,i
             k=k+1
-            b(k)=a(k) 
+            b(k)=a(k)
          enddo
       enddo
       return
@@ -47,12 +48,12 @@
             iaj=ipao(j)
             iaa=max(iaj,iai)
             iii=min(iaj,iai)
-            ij=iii+iaa*(iaa-1)/2 
+            ij=iii+iaa*(iaa-1)/2
             b(ij)=b(ij)+a(kl)*c1*c2*2.0d0
          enddo
          kl=kl+1
          ij=iai
-         ij=ij+ij*(ij-1)/2  
+         ij=ij+ij*(ij-1)/2
          b(ij)=b(ij)+a(kl)*c1*c1
       enddo
 
@@ -70,7 +71,7 @@
 
       SUBROUTINE pckao3(NPR,NAO,A1,A2,A3,B1,B2,B3)
       use stdacommon
-      IMPLICIT REAL*8(A-H,O-Z)                                                  
+      IMPLICIT REAL*8(A-H,O-Z)
       integer*8 ij,kl,k
 
       dimension a1(*),b1(*)
@@ -82,9 +83,9 @@
       do i=1,npr
          do j=1,i
             k=k+1
-            b1(k)=a1(k) 
-            b2(k)=a2(k) 
-            b3(k)=a3(k) 
+            b1(k)=a1(k)
+            b2(k)=a2(k)
+            b3(k)=a3(k)
          enddo
       enddo
       return
@@ -106,14 +107,14 @@
             iaj=ipao(j)
             iaa=max(iaj,iai)
             iii=min(iaj,iai)
-            ij=iii+iaa*(iaa-1)/2 
+            ij=iii+iaa*(iaa-1)/2
             ccf=c1*c2*2.0d0
             b1(ij)=b1(ij)+a1(kl)*ccf
             b2(ij)=b2(ij)+a2(kl)*ccf
             b3(ij)=b3(ij)+a3(kl)*ccf
          enddo
          kl=kl+1
-         ij=iai 
+         ij=iai
          ij=ij+ij*(ij-1)/2
          b1(ij)=b1(ij)+a1(kl)*c1*c1
          b2(ij)=b2(ij)+a2(kl)*c1*c1

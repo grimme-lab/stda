@@ -5,27 +5,53 @@
 
 26.08.2014: Version 1.3:
 
-    -Interfacing with Gaussian 09 possible (via g2molden) 
+    -Interfacing with Gaussian 09 possible (via g2molden)
 
 29.10.2014: Version 1.4:
 
     -sTDA program is now interfaced to TeraChem
     -Eigenvectors may be printed (Turbomole format)
-    -small bugfixes 
+    -small bugfixes
 
-01.03.2016: Version 1.5: 
+01.03.2016: Version 1.5:
 
-    -xTB 
-    -velocity correction 
+    -xTB
+    -velocity correction
     -make UKS available to public
-    
+
 13.02.2018: Version 1.6:
 
     - linear and nonlinear response function (SHG)
     - two-photon absorption
-    
+
 26.11.2019: Version 1.6.1:
-    
+
     - state to state transitions
     - SF-sTD-DFT
     - NTOs
+
+10.09.2020: Version 1.6.2:
+
+    - evaluation of the molecular optical rotation
+    - <S**2> for spin-flip states
+    - speed-up for the response function deck
+
+10.10.2022: Version 1.6.3:
+
+    - evaluation of the two-photon cross-sections (now fully working)
+    - RespA approach for the interpretation of molecular response properties
+    - dual-threshold method for the efficient treatment of large systems
+    - polarizability bug fixed
+
+12.09.2023: Version 1.6.3.3:
+
+    - Sources corrected for NTOs with dual threshold
+    - Sign error in the response part of the calculation of 2PA strengths is corrected
+
+08.01.2024: Version 2.0.0:
+
+    - interfaced by default to libcint (magnetic moment one-electron integrals still computed with the old integral deck)
+    - XsTDA (restricted and unrestricted[only excited states]) for global hybrids and range-separated hybrids
+    - XsTD-DFT (restricted and unrestricted[only excited states]) for global hybrids and range-separated hybrids
+    - SF-XsTD-DFT for global hybrids
+    - CAM-B3LYP, wB97X-D2, wB97X-D3, wB97MV, SRC2R1, and SRC2R2 RSH functionals natively implemented with XsTD

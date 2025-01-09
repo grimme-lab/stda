@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2020 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 
 ! written by Marc de Wegifosse 2017-2020
 
@@ -2871,14 +2872,14 @@ c B4 n iy ix
       mu(:,2)=yl(:)
       mu(:,3)=zl(:)
 
-      write(*,*)
-      write(*,*)'====================================================
-     .=================='
-      write(*,*)'               Welcome in nonlinear response sTD-DFT
-     . program'
-      write(*,*)'====================================================
-     .=================='
-      write(*,*)
+!      write(*,*)
+!      write(*,*)'====================================================
+!     .=================='
+!      write(*,*)'               Welcome in nonlinear response sTD-DFT
+!     . program'
+!      write(*,*)'====================================================
+!     .=================='
+!      write(*,*)
 
       !
       ! Genarating a list of indexes used in A and B formula to save a great bunch of time
@@ -2927,10 +2928,10 @@ c B4 n iy ix
       !Do i=1,counter_B
       !write(*,*)i,B_list(i,1:3)
       !enddo
-      call cpu_time(end_time)
-      print '("A & B indexes list Time = ",f12.2," minutes.")'
-     .      ,(end_time-start_time)/60.0
-      write(*,*)
+!      call cpu_time(end_time)
+!      print '("A & B indexes list Time = ",f12.2," minutes.")'
+!     .      ,(end_time-start_time)/60.0
+!      write(*,*)
       mu_s2s=0.0
       Do jj=1,nroot
       Do ii=1, nroot
@@ -2966,7 +2967,7 @@ c B4 n iy ix
       enddo
 !$omp end do
 !$omp end parallel
-      mu_s2s(ii,jj,ix)=-(A1+A2-B1-B2)/2.0
+      mu_s2s(ii,jj,ix)=-(A1+A2-B1-B2)/2.0d0
       !write(*,*) ix, mu_s2s(ii,jj,ix)
       enddo
       !else
@@ -2975,24 +2976,24 @@ c B4 n iy ix
       !mu_s2s(ii,jj,ix)=0.0
       !endif
       enddo
-      write(*,*)
-      write(*,*) 'State to state      eV       fL'
+!      write(*,*)
+!      write(*,*) 'State to state      eV       fL'
       Do ii=1, nroot
       osc_strength=2.0/3.0*(eci(ii)-eci(jj))*
      .(mu_s2s(ii,jj,1)**2.0+mu_s2s(ii,jj,2)**2.0+mu_s2s(ii,jj,3)**2.0)
-      write(*,11) jj, ii, (eci(ii)-eci(jj))*27.21139,
-     .osc_strength
+!      write(*,11) jj, ii, (eci(ii)-eci(jj))*27.21139,
+!     .osc_strength
       enddo
-      write(*,*)
-      write(*,*)
+!      write(*,*)
+!      write(*,*)
       enddo
-      write(*,*)'====================================================
-     .=================='
-      write(*,*)'               end of     nonlinear response sTD-DFT
-     . program'
-      write(*,*)'====================================================
-     .=================='
-      write(*,*)
+!      write(*,*)'====================================================
+!     .=================='
+!      write(*,*)'               end of     nonlinear response sTD-DFT
+!     . program'
+!      write(*,*)'====================================================
+!     .=================='
+!      write(*,*)
  11   format(i6,i9,f9.3,f11.4)
  12   format(a1,i3,a17,i3,a1)
 
@@ -3105,7 +3106,7 @@ c B4 n iy ix
      .,-45.56335/(freq(iroot)*2.0),';',45.56335/freq(iroot),','
      .,45.56335/freq(iroot),')'
       write(*,*)
-      call PrintBeta(beta)
+      call PrintBeta(beta,5555)
       write(*,*) '_____________________________________________
      .________'
       enddo
@@ -3138,9 +3139,11 @@ c B4 n iy ix
       real*4 ::freq(num_freq+1)
       real*4 ::Xci(nci,nroot), Yci(nci,nroot),eci(nci)
 
-      real*8 ::sigma(3,3)
+      real*8 ::sigma(3,3),sigma_f,sigma_g,sigma_h
       real*8 ::mu_s(nroot,3)
       real*8 ::mu_s2s(nroot,nroot,3)
+
+      if(nroot<num_trans)stop 'number of 2PA excitations too large!'
 
       mu=0.0
       mu(:,1)=xl(:)
@@ -3160,25 +3163,43 @@ c B4 n iy ix
       mu_s(i,2)=mu_s(i,2)+mu(ij,2)*(dble(Xci(j,i))+dble(Yci(j,i)))
       mu_s(i,3)=mu_s(i,3)+mu(ij,3)*(dble(Xci(j,i))+dble(Yci(j,i)))
       enddo
-      mu_s(i,:)=mu_s(i,:)*2.0**(1.0/2.0)
+      mu_s(i,:)=mu_s(i,:)*2.0d0**(1.0d0/2.0d0)
       enddo
 
       call lresp_ESAbis(nci,iconf,maxconf,xl,yl,zl,moci,
      .no,nv,eci,Xci,Yci,nroot,mu_s2s)
-
-      Do iroot=1, nroot
+      open(unit=60,file='2PA-abs-sos',status='replace')
+      Do iroot=1, num_trans
       omega=eci(iroot)/2.0
       sigma=0.0
 
       Do ix=1,3
-      Do iy=1,3
+      Do iy=1,ix
       Do ii=1,nroot
       sigma(ix,iy)=sigma(ix,iy)-
      . (mu_s(ii,ix)*mu_s2s(ii,iroot,iy)/(dble(eci(ii))-dble(omega))+
      . mu_s(ii,iy)*mu_s2s(ii,iroot,ix)/(dble(eci(ii))-dble(omega)))
       enddo
+      if(ix/=iy)then
+      sigma(iy,ix)=sigma(ix,iy)
+      endif
       enddo
       enddo
+
+      sigma_f=0.0
+      sigma_g=0.0
+      sigma_h=0.0
+      Do ix=1,3
+      Do iy=1,3
+      sigma_f=sigma_f+sigma(ix,ix)*sigma(iy,iy)
+      sigma_g=sigma_g+sigma(ix,iy)*sigma(ix,iy)
+      sigma_h=sigma_h+sigma(ix,iy)*sigma(iy,ix)
+      enddo
+      enddo
+      sigma_f=sigma_f/30.0
+      sigma_g=sigma_g/30.0
+      sigma_h=sigma_h/30.0
+
       write(*,*)
       write(*,3333)'Delta (',eci(iroot)*27.21139,')'
       write(*,*)
@@ -3187,10 +3208,27 @@ c B4 n iy ix
       write(*,2222)'y',sigma(2,1),sigma(2,2),sigma(2,3)
       write(*,2222)'z',sigma(3,1),sigma(3,2),sigma(3,3)
       write(*,*)
+      write(*,5555)'F =',sigma_f,' G =',sigma_G,' H =',sigma_H
+      write(*,4444)'Delta_2PA_//   =',2.0*sigma_f+2.0*sigma_g
+     .                               +2.0*sigma_h
+      write(*,4444)'Delta_2PA__|_  =',-1.0*sigma_f+4.0*sigma_g
+     .                               -1.0*sigma_h
+      write(*,4444)'Delta_2PA_circ =',-2.0*sigma_f+3.0*sigma_g
+     .                               +3.0*sigma_h
+      write(*,4444)'rho = //*(_|_)**-1 =',(2.0*sigma_f+2.0*sigma_g
+     .       +2.0*sigma_h)/(-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h)
+
+      write(60,6666)iroot,eci(iroot)*27.21139,2.0*sigma_f+2.0*sigma_g
+     .+2.0*sigma_h,-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h,-2.0*sigma_f
+     .+3.0*sigma_g+3.0*sigma_h,(2.0*sigma_f+2.0*sigma_g
+     .+2.0*sigma_h)/(-1.0*sigma_f+4.0*sigma_g-1.0*sigma_h)
       enddo
 3333  format(A16,F7.3,A1)
 1111  format(A22,2A20)
 2222  format(A2,3F20.6)
+4444  format(A20,F20.3)
+5555  format(A3,F20.3,A4,F20.3,A4,F20.3)
+6666  format(I3,F7.3,4F20.3)
       end subroutine tpa_sos
 
       subroutine lresp_ESA_tda(nci,iconf,maxconf,xl,yl,zl,moci,
@@ -4120,7 +4158,7 @@ c B4 n iy ix
      .=================='
 
       INQUIRE(FILE="wavelength", EXIST=file_exists)
-      if(file_exists==.false.)then
+      if(file_exists.eqv..false.)then
       num_freq=1
       allocate(freq(1))
       freq(1)=45.56335/589.30
@@ -4361,7 +4399,7 @@ c refractive index of solvent
      .=================='
       write(*,*)'VELOCITY REPRESENTATION (ORIGIN INDEPENDENT)'
       INQUIRE(FILE="wavelength", EXIST=file_exists)
-      if(file_exists==.false.)then
+      if(file_exists.eqv..false.)then
       num_freq=1
       allocate(freq(1))
       freq(1)=45.56335/589.30

@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c sRPA routine                                        c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -38,7 +39,7 @@ c matrices
       real*4 apb(n*(n+1)/2),xmy(n,nroots)
       real*4 eci(n)
       real*4 summe,x,y,omsqi,vl,vu
-      real*8 thr 
+      real*8 thr
 
       integer, allocatable ::iwork(:),isuppz(:)
       real*4, allocatable ::u(:,:),v(:,:),w(:,:)
@@ -48,7 +49,7 @@ c matrices
 
       logical ggavec
 !      allocate(ambsqr(n*(n+1)/2),
-      allocate(e(n),u(n,n),v(n,n),w(n,n),stat=ierror)  
+      allocate(e(n),u(n,n),v(n,n),w(n,n),stat=ierror)
       if(ierror.ne.0) stop 'allocation error (rpasolve)'
 
 
@@ -67,7 +68,7 @@ c form product: w = (a+b)*(a-b)^0.5
 
 c form product: v = (a-b)^0.5 * w
 
-       call ssymm('l','l',n,n,1.e0,U,n,W,n,0.e0,V,n)       
+       call ssymm('l','l',n,n,1.e0,U,n,W,n,0.e0,V,n)
 
 !      call prmat4(6,V,n,n,'M') ! for debugging: print M matrix (V)
 
@@ -77,11 +78,11 @@ c get rid of matrices which are not needed anymore
 c set variables for RPA diagonalization
       lwork =26*n
       liwork=10*n
-      vl=0  
+      vl=0
       vu=thr**2.0 ! set nroot threshold to Ethr^2
       allocate(z(n,n),work(lwork)
-     .        ,iwork(liwork),isuppz(n),stat=ierror)  
-      if(ierror.ne.0) stop 'allocation error (rpasolve)' 
+     .        ,iwork(liwork),isuppz(n),stat=ierror)
+      if(ierror.ne.0) stop 'allocation error (rpasolve)'
 
       write(*,*)'calculate eigenvalues of (A-B)^0.5*(A+B)*(A-B)^0.5 ...'
       call ssyevr('V','V','U',n,v,n,vl,vu,il,iu,1.e-6,
@@ -91,11 +92,11 @@ c set variables for RPA diagonalization
       if(info.ne.0.or.nroots.lt.1) stop 'RPA diag failed'
       deallocate(v,work,iwork,isuppz,stat=ierror)
       if(ierror.ne.0) stop 'deallocation after RPA diag failed'
-      
+
 ! testing print Z
 !      call prmat4(6,z,n,n,'Z')
 
-      if(TPA==.false.)then
+      if((TPA .eqv. .false.) .and. (FULL2PA .eqv. .false.))then
       ij=0
       do i=1,n
          ij=ij+i
@@ -117,8 +118,8 @@ c (A-B)^0.5  * Z = X+Y ! results from conversion to Hermitian eigenvalue problem
          do i=1,n
             do j=1,i
                k=k+1
-               xpy(i,nro)=xpy(i,nro)+ambsqr(k)*z(j,nro)/sqrt(eci(nro)) ! dividing by sqrt(eci) yields correct norm 
-               xpy(j,nro)=xpy(j,nro)+ambsqr(k)*z(i,nro)/sqrt(eci(nro))  
+               xpy(i,nro)=xpy(i,nro)+ambsqr(k)*z(j,nro)/sqrt(eci(nro)) ! dividing by sqrt(eci) yields correct norm
+               xpy(j,nro)=xpy(j,nro)+ambsqr(k)*z(i,nro)/sqrt(eci(nro))
             enddo
          enddo
 
@@ -130,8 +131,8 @@ c (A+B)*|X+Y>  = e * (X-Y) ! first row of TD-DFT equation
          do i=1,n
             do j=1,i
                k=k+1
-               xmy(i,nro)=xmy(i,nro)+apb(k)*xpy(j,nro)  
-               xmy(j,nro)=xmy(j,nro)+apb(k)*xpy(i,nro)  
+               xmy(i,nro)=xmy(i,nro)+apb(k)*xpy(j,nro)
+               xmy(j,nro)=xmy(j,nro)+apb(k)*xpy(i,nro)
             enddo
          enddo
 
@@ -152,7 +153,7 @@ c        write(*,'(''x-y'',10f8.4)')(xmy(i,nro),i=1,n)
 c        write(*,'(''x  '',10f8.4)')(xpy(i,nro),i=1,n)
 c        write(*,'(''y  '',10f8.4)')(xmy(i,nro),i=1,n)
 c        write(*,*) 'norm',summe
-c        write(*,*) 'e   ',eci(nro)             
+c        write(*,*) 'e   ',eci(nro)
 c        write(*,'(''x+y'',10f8.4)')(xpy(i,nro),i=1,n)
 ! norm the vectors
 !         summe=1.0/sqrt(summe)
@@ -186,11 +187,11 @@ c      close(36)
 !      enddo
 
       if (ggavec) then
-        call printvectda(ggavec,n,nroots,z,e) 
+        call printvectda(ggavec,n,nroots,z,e)
       endif
 
-               
-      deallocate(z,stat=ierror)  
+
+      deallocate(z,stat=ierror)
 c      deallocate(ambsqr,w5,z,stat=ierror)
       return
       end
@@ -216,15 +217,15 @@ c working variables for sspevd diagonalization routine
       allocate(iwork(liwork),stat=ierror)
       if(ierror.ne.0) stop 'allocation error (iwork in matpow)'
 
-c      allocate(c(n*n),w(n*5),e(n),stat=ierror)  
+c      allocate(c(n*n),w(n*5),e(n),stat=ierror)
       allocate(c(n*n),w(lwork),e(n),stat=ierror)
-      if(ierror.ne.0) stop 'allocation error (matpow)' 
+      if(ierror.ne.0) stop 'allocation error (matpow)'
 
-      
+
 c      call shqrii(a,n,n,w,e,c) ! old routine - not used
 c      call sspev('V','U',n,a,e,c,n,w,info) ! alternative LAPACK routine (not used)
 c used LAPACK routine using divide-and-conquer algorithm (slightly faster than sspev)
-      call sspevd('V','U',n,a,e,c,n,w,lwork,iwork,liwork,info) 
+      call sspevd('V','U',n,a,e,c,n,w,lwork,iwork,liwork,info)
       if(e(1).lt.0) stop 'matrix power impossible'
 c take square root of diagonal elements
       do i=1,n
@@ -248,8 +249,8 @@ c transform back from diagonal to non-diagonal form
 !$omp end do
 !$omp end parallel
 
-c      deallocate(c,w,e,stat=ierror)  
-      deallocate(c,w,e,iwork,stat=ierror)  
+c      deallocate(c,w,e,stat=ierror)
+      deallocate(c,w,e,iwork,stat=ierror)
 
       return
       end
@@ -292,7 +293,7 @@ c     blow up symmetric matrix to full size
 !$omp end parallel
       return
       end
-      
+
       subroutine sUnblow_fast(n,a,b)
 c     blow up symmetric matrix to full size
       implicit none
@@ -311,7 +312,7 @@ c     blow up symmetric matrix to full size
 !$omp end do
 !$omp end parallel
       return
-      end      
+      end
 
       subroutine dblow_fast(n,a,b)
 c     blow up symmetric matrix to full size
@@ -333,7 +334,7 @@ c     blow up symmetric matrix to full size
 !$omp end parallel
       return
       end
-      
+
       subroutine dUnblow_fast(n,a,b)
 c     blow up symmetric matrix to full size
       implicit none
@@ -352,4 +353,4 @@ c     blow up symmetric matrix to full size
 !$omp end do
 !$omp end parallel
       return
-      end   
+      end

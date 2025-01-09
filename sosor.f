@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
       subroutine sosor(nroots,xmass,x,y)
       implicit none
       real*4 x(*)
@@ -44,7 +45,7 @@ c    .196.9665d0, 200.5900d0, 204.3700d0, 207.2000d0, 208.9804d0,
 c    .18*0.000d0,   0.0000d0,  5*0.000d0/
 
 ************************************************************************
-*                        ORD at 6 nm values          
+*                        ORD at 6 nm values
 * conversion from R to alpha:
 * P. L. Polavarapu and D. K. Chakraborty
 * Chem.Phys. 240 (1999) page 1
@@ -55,7 +56,7 @@ c     do i=1,n
 c        xmass=xmass+ams(idint(xyz(4,i)))
 c     enddo
 
-      xlam(1)=632.8 
+      xlam(1)=632.8
       xlam(2)=589.3
       xlam(3)=579.
       xlam(4)=546.
@@ -72,9 +73,9 @@ c refractive index of solvent
       do i=1,nroots
             xau =x(i)
 c measurement point
-            eau =1.d+7/xlam(j)/2.19474625d+5 
+            eau =1.d+7/xlam(j)/2.19474625d+5
 c R in au (input in 10-40 cgs) taken from TM
-            rau =y(i)/64604.8   
+            rau =y(i)/64604.8
 c beta
             r1(j)=r1(j)+(2.*137.036/3.)*rau/(xau**2-eau**2)
       enddo
@@ -90,10 +91,10 @@ c beta
       close(33)
       endif
 
-      write(*,*) 
+      write(*,*)
       write(*,*) 'SOS specific optical rotation '
-      write(*,*) 'including Lorentz factor for common solvent (n=1.4)' 
-      write(*,*) 'lambda [eV] alpha[grad*cm^3*g^-1*dm^-1]' 
+      write(*,*) 'including Lorentz factor for common solvent (n=1.4)'
+      write(*,*) 'lambda [eV] alpha[grad*cm^3*g^-1*dm^-1]'
       do j=1,6
          if(j.eq.2)then
          write(*,142) xlam(j),1.d+7/(8065.54093*xlam(j)),
@@ -103,10 +104,9 @@ c beta
      .   r1(j)
          endif
       enddo
-      write(*,*) 
+      write(*,*)
 
  142  format(f6.1,f6.2,2f12.2,' ##')
  143  format(f6.1,f6.2,2f12.2)
 
       end
-

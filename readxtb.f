@@ -1,36 +1,37 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 ccccccccccccccccccccccccccccccccc
 !    read out xTB     input     c
-ccccccccccccccccccccccccccccccccc           
+ccccccccccccccccccccccccccccccccc
 ! ncent  : # atoms
 ! nmo    : # MOs
 ! nbf    : # AOs
 ! nprims : # primitives (in total)
-! co(ncent,1:3) : Cartesian coordinates 
+! co(ncent,1:3) : Cartesian coordinates
 ! co(ncent,4)   : nuclear charge
 ! cxip(nprims) : contraction coefficients of primitives
 ! exip(nprims) : exponents of primitives
-! cmo(nbf,nmo) : LCAO-MO coefficients 
+! cmo(nbf,nmo) : LCAO-MO coefficients
 ! eps(nmo)     : orbital eigenvalues
 ! occ(nmo)     : occupation # of MO
 ! ipty(nprims) : angular momentum of primitive function
-! ipao(nbf)    : # primitives in contracted AO 
+! ipao(nbf)    : # primitives in contracted AO
 ! ipat(ncent)  : # of atom, the primitive is located on
 
 
@@ -50,7 +51,7 @@ ccccccccccccccccccccccccccccccccc
           write(*,*)'file: wfn.xtb not found'
           stop 'input file not found'
       endif
- 
+
       iwfn=29
       open(unit=iwfn,file='wfn.xtb',form='unformatted',
      .      status='old')
@@ -115,7 +116,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          do j=1,3
            read(iwfn) dum
            co(i,j)=dum
-         enddo 
+         enddo
          read(iwfn) k
          co(i,4)=dble(k)
          if(co(i,4).lt.1.0d0) atnam(i)='xx'
@@ -129,23 +130,23 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !303   format(2x,a2,i3,2x,3f14.8,3x,f10.2)
 
 **************************
-! Now read basis set data                       
+! Now read basis set data
 **************************
 ! ipty
       do i=1,nprims
         read(iwfn) k
-        ipty(i)=k 
+        ipty(i)=k
       enddo
 ! ipat
-      do i=1,nprims          
-        read(iwfn) k 
+      do i=1,nprims
+        read(iwfn) k
         ipat(i) = k
       enddo
 ! ipao
       do i=1,nprims
-        read(iwfn) k 
+        read(iwfn) k
         ipao(i) = k
-      enddo       
+      enddo
 
 ! first exponents, then contraction coefficients
       read(iwfn) exip(1:nprims)
@@ -154,12 +155,12 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ! now the mo data   *
 *********************
       k=0
-      if(imethod.eq.2) then 
+      if(imethod.eq.2) then
         !uks case: nmo = nmo_a + nmo_b
         ! alpha first, beta second
         ! occs + energies
-        k=nmo/2 
-        read(iwfn) occ(1:k)     
+        k=nmo/2
+        read(iwfn) occ(1:k)
         read(iwfn) eps(1:k)
         k=k+1
         read(iwfn) occ(k:nmo)
@@ -169,13 +170,13 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         read(iwfn) cc(1:i)
         i=i+1
         k=nmo*nbf
-        read(iwfn) cc(i:k)       
+        read(iwfn) cc(i:k)
       else
       !rks case
-      ! occs + energies      
+      ! occs + energies
         read(iwfn) occ(1:nmo)
         read(iwfn) eps(1:nmo)
-      ! read MO coefficients 
+      ! read MO coefficients
         read(iwfn) cc
       endif
 
@@ -194,8 +195,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       endif
 
       call etafill(nprims)
-      
+
       return
       end
-
-

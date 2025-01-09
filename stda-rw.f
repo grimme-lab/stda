@@ -1,21 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
-
+!! ------------------------------------------------------------------------
 ! adapted by Marc de Wegifosse 2018-2019
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -53,13 +53,13 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       SUBROUTINE stda_rw(ncent,nmo,nao,xyz,c,eps,occ,iaoat,thr,thrp,
-     .            ax,alphak,betaj,fthr,nvec)
+     .            ax,alphak,betaj,fthr,nvec,nprims)
       use commonlogicals
       use commonresp
       use omp_lib
       IMPLICIT NONE
 c input:
-      integer ncent,nmo,nao
+      integer ncent,nmo,nao,nprims
       integer iaoat(*)
       real*8  thr,thrp,ax,othr,vthr
       real*8  c(*),eps(*),occ(*),xyz(4,*)
@@ -93,6 +93,7 @@ c Linear response
       real*4 :: start_time, end_time, stda_time
       integer :: STATUS
 
+      integer :: nocc
 ccccccccccccc
       real*4  vu,vl
       integer,allocatable ::iwork(:)
@@ -175,12 +176,20 @@ c make it save
       write(*,*)'max. CSF selection range (eV) : ', fthr
       fthr = fthr /27.211385050d0
       endif
-      write(*,*)'triplet                       : ', triplet
+      write(*,*)'triplet                         ', triplet
 
+      If(Xcore)then
+        do i=1,nmo
+           if(occ(i).gt.1.990d0.and.i.le.Ecore/2)moci=moci+1
+           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)moci=moci+1
+        enddo
+
+      else
       do i=1,nmo
          if(occ(i).gt.1.990d0.and.eps(i).gt.othr)moci=moci+1
          if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)moci=moci+1
       enddo
+      endif
 
       allocate(
      .         xl(moci*(moci+1)/2),yl(moci*(moci+1)/2),
@@ -198,7 +207,57 @@ c make it save
 
       write(*,*)'MOs in TDA : ', moci
 
-! make two cases: 1st one) eigenvectors are needed, 2) eigenvectors are not needed
+      if(Xcore)then
+        if(eigvec.or.nto) then ! we want eigenvectors to be printed out
+        allocate(vecchk(nmo), stat=ierr)
+        if(ierr.ne.0)stop 'allocation failed for vecchk'
+          vecchk=0
+          moci=0
+          do i=1,nmo
+             if(occ(i).gt.1.990d0.and.i.le.Ecore/2)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+                vecchk(i)=moci
+             endif
+          enddo
+          ihomo=moci
+          do i=1,nmo
+             if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+                vecchk(i)=moci
+             endif
+          enddo
+        else ! no eigenvectors needed
+          moci=0
+          do i=1,nmo
+             if(occ(i).gt.1.990d0.and.i.le.Ecore/2)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+             endif
+          enddo
+          ihomo=moci
+          do i=1,nmo
+             if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+             endif
+          enddo
+        endif
+      else
+  ! make two cases: 1st one) eigenvectors are needed, 2) eigenvectors are not needed
       if(eigvec.or.nto) then ! we want eigenvectors to be printed out
       allocate(vecchk(nmo), stat=ierr)
       if(ierr.ne.0)stop 'allocation failed for vecchk'
@@ -248,6 +307,8 @@ c make it save
         enddo
       endif
 
+      endif
+
       no=ihomo
       nv=moci-no
       write(*,*)'oMOs in TDA: ', no
@@ -282,21 +343,78 @@ c            dipole lengths
 c
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
+      nocc=0
+      do i=1,nmo
+      nocc=nocc+idint(occ(i))
+      enddo
+      nocc=nocc/2
       open(unit=31,file='xlint',form='unformatted',status='old')
       read(31) help
+!      dipole(1)=0.0
+!      do i=1, ncent
+!      dipole(1)=dipole(1)+xyz(1,i)*xyz(4,i)
+!      enddo
+!      do k=1,nocc
+!      Do i=1,nao
+!      jwrk=(k-1)*nao+i
+!      do j=1,nao
+!      iwrk=(k-1)*nao+j
+!      dipole(1)=dipole(1)+2.0*c(jwrk)*c(iwrk)*help(lin(i,j))
+!      enddo
+!      enddo
+!      enddo
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,xl)
       close(31,status='delete')
       open(unit=32,file='ylint',form='unformatted',status='old')
       read(32) help
+!      dipole(2)=0.0
+!      do i=1, ncent
+!      dipole(2)=dipole(2)+xyz(2,i)*xyz(4,i)
+!      enddo
+!      do k=1,nocc
+!      Do i=1,nao
+!      jwrk=(k-1)*nao+i
+!      do j=1,nao
+!      iwrk=(k-1)*nao+j
+!      dipole(2)=dipole(2)+2.0*c(jwrk)*c(iwrk)*help(lin(i,j))
+!      enddo
+!      enddo
+!      enddo
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,yl)
       close(32,status='delete')
       open(unit=33,file='zlint',form='unformatted',status='old')
       read(33) help
+!      dipole(3)=0.0
+!      do i=1, ncent
+!      dipole(3)=dipole(3)+xyz(3,i)*xyz(4,i)
+!      enddo
+!      do k=1,nocc
+!      Do i=1,nao
+!      jwrk=(k-1)*nao+i
+!      do j=1,nao
+!      iwrk=(k-1)*nao+j
+!      dipole(3)=dipole(3)+2.0*c(jwrk)*c(iwrk)*help(lin(i,j))
+!      enddo
+!      enddo
+!      enddo
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zl)
       close(33,status='delete')
+!      write(*,*)
+!      write(*,*)'Dipole moment (au)'
+!      write(*,*)'    X       Y       Z   '
+!      write(*,'(3f9.4,''  total : '',f8.3)')
+!     .     dipole(1),   dipole(2),   dipole(3),
+!     .dsqrt(dipole(1)**2.0+dipole(2)**2.0+dipole(3)**2.0)
+!      write(*,*)
+!      write(*,*)'Dipole moment (Debye)'
+!      write(*,*)'    X       Y       Z   '
+!      write(*,'(3f9.4,''  total : '',f8.3)')
+!     .     dipole(1)*2.5418,   dipole(2)*2.5418,   dipole(3)*2.5418,
+!     .dsqrt(dipole(1)**2.0+dipole(2)**2.0+dipole(3)**2.0)*2.5418
+      write(*,*)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 c
@@ -492,7 +610,7 @@ c ams is the atomic mass (-> mol weight for output file)
       write(740)pia(1:ncent,i)
       enddo
       close(740)
-      deallocate(clow)
+      if(XsTD.eqv..false.)deallocate(clow)
 
       write(*,'(/'' SCF atom population (using active MOs):'')')
       write(*,'(10F7.3)')q2(1:ncent)*2.0
@@ -700,10 +818,27 @@ c allocate A+B and A-B in packed form
       allocate( apb(nci*(nci+1)/2),ambsqr(nci*(nci+1)/2),
      .          stat=ierr )
       if(ierr.ne.0)stop 'allocation failed for A+B or A-B'
-
+      if(XsTD)then
+      if(RSH_flag)then
+      if(RSH_sub)then
+      call xstd_rpamat_RSH2(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      else
+      call xstd_rpamat_RSH(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      else
+      call xstd_rpamat(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      deallocate(clow)
+      else
       call rrpamat_rw(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed,gamj
      .             ,gamk,apb,ambsqr,moci)
-
+      endif
 *****************************
 c Linear Response functions *
 *****************************
@@ -714,9 +849,9 @@ c Linear Response functions *
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
       close(53,status='delete')
-      if(velo_OR==.false.)call optrot(nci,apb,amb,iconf,maxconf,
+      if(velo_OR.eqv..false.)call optrot(nci,apb,amb,iconf,maxconf,
      .xl,yl,zl,moci,no,nv,xm,ym,zm,xmolw)
-      if(velo_OR==.true.)call optrot_velo(nci,apb,amb,iconf,maxconf,
+      if(velo_OR.eqv..true.)call optrot_velo(nci,apb,amb,iconf,maxconf,
      .xv,yv,zv,moci,no,nv,xm,ym,zm,xmolw)
       call cpu_time(end_time)
       print '("Opt. Rot.   Time = ",f12.2," minutes.")'
@@ -930,16 +1065,40 @@ cccccccccccccccccccccccccc
 ! construct ( 0.5 * B ) for X trafo (velocity correction) and print to file *
 !********************************************************************************
       if(velcorr) then
+        if(XsTD)then
+        call Xsrtdacorr(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed
+     .                ,clow,nao,moci)
+        else
         call rtdacorr_rw(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed
      .                ,gamj,gamk,moci)
+        endif
       endif
 !********************************************************************************
 
       allocate( hci(nci,nci), stat=ierr  )
       if(ierr.ne.0)stop 'allocation failed for TDA matrix'
       write(*,*)'calculating TDA matrix ...'
+      if(XsTD)then
+      if(RSH_flag)then
+      if(RSH_sub)then
+      call Xstda_mat_RSH2(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      else
+      call Xstda_mat_RSH(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      else
+      call Xstda_mat(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      deallocate(clow)
+      else
       call rtdamat_rw(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed,gamj
      .             ,gamk,hci,moci)
+      endif
       deallocate(gamj,gamk)
 !      call prmat4(6,hci,nci,nci,'A-Matrix')
 !********************************************************************************
@@ -1438,13 +1597,14 @@ c take only very bright CD ones
 ***********************************************************************
       subroutine ptselect_rw(nex,ncent,no,nv,nexpt,mxcnf,iconf,kconf,
      .                    dak,dax,ed,edpt,gamj,gamk,thrp,new,moci)
+      use commonlogicals
       use omp_lib
       implicit none
       integer, intent(in) :: nex,ncent,nexpt,mxcnf
       integer, intent(in) :: kconf(mxcnf,2),no,nv
       integer, intent (inout) :: iconf(mxcnf,2)
       integer, intent (out) :: new
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
+      real*4,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*8, intent(in)  :: dak,dax,thrp,edpt(mxcnf)
       real*8, intent(inout) :: ed(mxcnf)
       real*4, allocatable :: qia(:,:),pia(:,:)
@@ -1477,7 +1637,11 @@ c take only very bright CD ones
       read(710)pij(1:ncent,ij)
       enddo
       enddo
-      close(710)
+      if(XsTD)then
+        close(710,status='delete')
+      else
+        close(710)
+      endif
       Do i=no+1, moci
       k=i-no
       Do j=no+1, i-1
@@ -1488,8 +1652,16 @@ c take only very bright CD ones
       ij=lin(k,k)
       read(72)qab(1:ncent,ij)
       enddo
-      close(72)
-      close(73)
+      if(XsTD)then
+        close(72,status='delete')
+      else
+        close(72)
+      endif
+      if(XsTD)then
+        close(73,status='delete')
+      else
+        close(73)
+      endif
       Do i=1, no
       Do j=no+1, moci
       ij=(i-1)*nv+j-no
@@ -1497,8 +1669,16 @@ c take only very bright CD ones
       read(740)pia(1:ncent,ij)
       enddo
       enddo
-      close(74)
-      close(740)
+      if(XsTD)then
+        close(74,status='delete')
+      else
+        close(74)
+      endif
+      if(XsTD)then
+        close(740,status='delete')
+      else
+        close(740)
+      endif
 
       new=0
       pt2=0.0d0
@@ -1580,7 +1760,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
+      real*4,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1780,7 +1960,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
+      real*4,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1869,7 +2049,7 @@ c if sum > threshold include it
       implicit none
       ! Compute semi-empirical integrals directly
       integer, intent(in) :: ncent
-      real*8,  intent(in) :: gamma(1:ncent,1:ncent)
+      real*4,  intent(in) :: gamma(1:ncent,1:ncent)
       real*4 :: q_ij(1:ncent), q_ab(1:ncent), intermediate(1:ncent)
       real*4 :: sdot
       call ssymv('u',ncent,1.0,gamma,ncent,q_ab,1,0.0,intermediate,1)
@@ -1885,7 +2065,7 @@ c if sum > threshold include it
       use omp_lib
       implicit none
       integer, intent(in) :: nci,ncent,no,nv,mxcnf,iconf(mxcnf,2)
-      real*8,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
+      real*4,  intent(in) :: gamj(1:ncent,1:ncent),gamk(1:ncent,1:ncent)
       real*4, allocatable :: qia(:,:),pia(:,:)
       real*4, allocatable :: qab(:,:),qij(:,:),pij(:,:)
       real*8, intent(in)  :: dak,dax,ed(mxcnf)
@@ -1902,7 +2082,6 @@ c if sum > threshold include it
 
       allocate(qia(ncent,mxcnf),qab(ncent,nv*(nv+1)/2),
      .         pij(ncent,no*(no+1)/2),pia(ncent,mxcnf))
-
       open(unit=710,file='pij',form='unformatted',status='old')
       open(unit=72,file='qaa',form='unformatted',status='old')
       open(unit=73,file='qab',form='unformatted',status='old')

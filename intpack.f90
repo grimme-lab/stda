@@ -1,19 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
+!
+!! ------------------------------------------------------------------------
 !
 ! Adapted from xtb4stda by MdeW
 !! ------------------------------------------------------------------------
@@ -21,7 +23,7 @@ module intpack
    use iso_fortran_env, only : wp => real64
 
 contains
-! propa split in propa0 and propa1 to avoid computing several time the same things and neglect if efact below thr 
+! propa split in propa0 and propa1 to avoid computing several time the same things and neglect if efact below thr
 subroutine propa0(aname,c,va,nt,ij,kl,efact)
    use stdacommon
    implicit real(wp)(a-h,o-z)
@@ -31,10 +33,10 @@ subroutine propa0(aname,c,va,nt,ij,kl,efact)
    ! local
    common /abfunc/ ra(3),rb(3),ga,gb,ia,ib,gama, &
    & d(3),dd(84),e(3),aa(20),bb(20),a(3),b(3)
-   dimension v(nt),val(nt) 
-      
+   dimension v(nt),val(nt)
+
    a(1:3)=eta(ij,1:3)
-   b(1:3)=eta(kl,1:3) 
+   b(1:3)=eta(kl,1:3)
    etaij4=eta(ij,4)
    etakl4=eta(kl,4)
    iff1=dint(eta(ij,5))
@@ -80,8 +82,8 @@ subroutine propa1(aname,c,va,nt,ij,kl,efact)
    ! local
    common /abfunc/ ra(3),rb(3),ga,gb,ia,ib,gama, &
    & d(3),dd(84),e(3),aa(20),bb(20),a(3),b(3)
-   common/ prptyp / mprp 
-   dimension v(nt),val(nt) 
+   common/ prptyp / mprp
+   dimension v(nt),val(nt)
    integer,parameter :: lin(84) = &
       & (/0,1,0,0,2,0,0,1,1,0,3,0,0,2,2,1,0,1,0,1,4,0,0,3,3,1,0,1,0,2,2,0, &
       &   2,1,1,5,0,0,3,3,2,2,0,0,4,4,1,0,0,1,1,3,1,2,2,1,6,0,0,3,3,0,5,5, &
@@ -94,7 +96,7 @@ subroutine propa1(aname,c,va,nt,ij,kl,efact)
       & (/0,0,0,1,0,0,2,0,1,1,0,0,3,0,1,0,1,2,2,1,0,0,4,0,1,0,1,3,3,0,2,2, &
       &   1,1,2,0,0,5,0,2,0,3,2,3,0,1,0,1,4,4,3,1,1,1,2,2,0,0,6,0,3,3,0,1, &
       &    5,5,1,0,0,2,4,4,0,2,1,2,2,3,1,3,1,1,4,2/)
-      
+
    iff1=ia
    iff2=ib
    val = 0
@@ -281,9 +283,9 @@ subroutine propa1(aname,c,va,nt,ij,kl,efact)
        return
    !cha
 end subroutine propa1
-   
-   
-   
+
+
+
 !=======================================================================
 ! cartesian gaussian functions (6d,10f...)
 ! iff :
@@ -306,7 +308,7 @@ subroutine propa(aname,c,va,nt,ij,kl)
    real(wp) a(3),b(3),c(3),va(nt)
    ! local
    common /abfunc/ ra(3),rb(3),ga,gb,ia,ib
-   common/ prptyp / mprp 
+   common/ prptyp / mprp
    dimension d(3),dd(84),v(nt),val(nt) !,v(3),val(3)
    dimension e(3),aa(20),bb(20)
    integer,parameter :: lin(84) = &
@@ -321,9 +323,9 @@ subroutine propa(aname,c,va,nt,ij,kl)
       & (/0,0,0,1,0,0,2,0,1,1,0,0,3,0,1,0,1,2,2,1,0,0,4,0,1,0,1,3,3,0,2,2, &
       &   1,1,2,0,0,5,0,2,0,3,2,3,0,1,0,1,4,4,3,1,1,1,2,2,0,0,6,0,3,3,0,1, &
       &    5,5,1,0,0,2,4,4,0,2,1,2,2,3,1,3,1,1,4,2/)
-      
+
    a(1:3)=eta(ij,1:3)
-   b(1:3)=eta(kl,1:3) 
+   b(1:3)=eta(kl,1:3)
    etaij4=eta(ij,4)
    etakl4=eta(kl,4)
    iff1=dint(eta(ij,5))
@@ -579,7 +581,7 @@ pure subroutine rhftce(cfs,a,e,iff)
    integer,intent(in)  :: iff
    real(wp), intent(in)  :: a(*),e(*)
    real(wp), intent(inout) :: cfs(*)
-   real(wp), parameter   :: c2 = 2.0d0 
+   real(wp), parameter   :: c2 = 2.0d0
    real(wp), parameter   :: c3 = 3.0d0
    real(wp)  :: aex,aey,aez
    ! ---- e = center of product function, a = center of single gaussian
@@ -588,7 +590,7 @@ pure subroutine rhftce(cfs,a,e,iff)
    aez = e(3)-a(3)
 
    select case(iff)
-   case(1)          
+   case(1)
       continue
    case(2)
       cfs(1)=aex*cfs(2)
@@ -1252,7 +1254,7 @@ subroutine opam(l,m,n,gama,v,d)
     do i=1,l
       s3=s3+g(i)*ovl(i)
     enddo
-      call bip(my(ia),my(ib),pa(2),pb(2))          
+      call bip(my(ia),my(ib),pa(2),pb(2))
       m=my(ia)+my(ib)
       m1=m-1
     do i=1,m1
@@ -1262,7 +1264,7 @@ subroutine opam(l,m,n,gama,v,d)
     do i=1,m
       s6 =s6+g(i)*ovl(i)
     enddo
-    call bip(nz(ia),nz(ib),pa(3),pb(3))            
+    call bip(nz(ia),nz(ib),pa(3),pb(3))
       n=nz(ia)+nz(ib)
       n1=n-1
     do i=1,n1
@@ -1281,7 +1283,7 @@ subroutine opam(l,m,n,gama,v,d)
     return
 end subroutine opam
 
-subroutine bip(la,lb,a,b)          
+subroutine bip(la,lb,a,b)
    implicit real(wp)(a-h,o-z)
    common /abfunc/ ra(3),rb(3),ga,gb,ia,ib
    common /gf/f(7),g(8)
@@ -1396,7 +1398,7 @@ subroutine bip(la,lb,a,b)
       f(3)=c3*a
       g(1)=-gb2*(a**3)*b
       g(2)=-gb2*a*a*(a+c3*b)
-      g(3)=-c6*a*gb*(a+b)   
+      g(3)=-c6*a*gb*(a+b)
       g(4)=-gb2*(c3*a+b)
       return
 !       f - p
@@ -1425,7 +1427,7 @@ subroutine bip(la,lb,a,b)
       return
 !       f - f
    34 f(1)=(a*b)**3
-      f(2)=c3*((a*b)**2)*(a+b) 
+      f(2)=c3*((a*b)**2)*(a+b)
       f(3)=c3*a*b*(a*(a+c3*b)+b*b)
       f(4)=a*a*(a+9.d0*b)+b*b*(b+9.d0*a)
       f(5)=c3*(a*(a+c3*b)+b*b)

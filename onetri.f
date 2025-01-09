@@ -1,19 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
+!
+!! ------------------------------------------------------------------------
 !
       SUBROUTINE ONETRI(ITY,S,S1,S2,ARRAY,N,IVAL)
       IMPLICIT REAL*8 (A-H,O-Z)
@@ -29,7 +31,7 @@ C     ARRAY     MO MATRIX OVER SO'S
 C     N         LINEAR DIMENSION OF ARRAYS
 C     BERND HESS, UNIVERSITY OF BONN, JANUARY 1991
       DIMENSION S(*),S1(*),S2(*),ARRAY(N,IVAL)
-     
+
 C
 C     DETERMINE IF WE HAVE AN ANTISYMMETRIC INTEGRAL
       IF (ITY.EQ.-1) GOTO 99
@@ -57,7 +59,7 @@ C     BLOW UP SYMMETRIC OR ANTISYMMETRIC MATRIX TO FULL SIZE
       REAL*8 A(*),B(N,N)
 C
 C     DETERMINE IF WE HAVE AN ANTISYMMETRIC INTEGRAL
-      
+
       IF (ITY.EQ.-1) GOTO 99
       IJ=0
       DO 1 I=1,N
@@ -80,4 +82,3 @@ C     DETERMINE IF WE HAVE AN ANTISYMMETRIC INTEGRAL
 11    CONTINUE
       RETURN
       END
-

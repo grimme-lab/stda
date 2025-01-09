@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C ncent: number of atoms
 C nmo  : number of MOs
@@ -50,13 +51,13 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       SUBROUTINE stda(ncent,nmo,nao,xyz,c,eps,occ,iaoat,thr,thrp,
-     .            ax,alphak,betaj,fthr,nvec)
+     .            ax,alphak,betaj,fthr,nvec,nprims)
       use commonlogicals
       use commonresp
       use omp_lib
       IMPLICIT NONE
 c input:
-      integer ncent,nmo,nao
+      integer ncent,nmo,nao,nprims
       integer iaoat(*)
       real*8  thr,thrp,ax,othr,vthr
       real*8  c(*),eps(*),occ(*),xyz(4,*)
@@ -90,6 +91,7 @@ c Linear response
       real*4 :: start_time, end_time, stda_time
       integer :: STATUS
 
+      integer :: nocc
 ccccccccccccc
       real*4  vu,vl
       integer,allocatable ::iwork(:)
@@ -174,10 +176,20 @@ c make it save
       endif
       write(*,*)'triplet                       : ', triplet
 
+      If(Xcore)then
+        do i=1,nmo
+           if(occ(i).gt.1.990d0.and.i.le.Ecore2.and.i.ge.Ecore)then
+           moci=moci+1
+           endif
+           if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)moci=moci+1
+        enddo
+
+      else
       do i=1,nmo
          if(occ(i).gt.1.990d0.and.eps(i).gt.othr)moci=moci+1
          if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)moci=moci+1
       enddo
+      endif
 
       allocate(
      .         xl(moci*(moci+1)/2),yl(moci*(moci+1)/2),
@@ -195,6 +207,56 @@ c make it save
 
       write(*,*)'MOs in TDA : ', moci
 
+      if(Xcore)then
+        if(eigvec.or.nto) then ! we want eigenvectors to be printed out
+        allocate(vecchk(nmo), stat=ierr)
+        if(ierr.ne.0)stop 'allocation failed for vecchk'
+          vecchk=0
+          moci=0
+          do i=1,nmo
+             if(occ(i).gt.1.990d0.and.i.le.Ecore2.and.i.ge.Ecore)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+                vecchk(i)=moci
+             endif
+          enddo
+          ihomo=moci
+          do i=1,nmo
+             if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+                vecchk(i)=moci
+             endif
+          enddo
+        else ! no eigenvectors needed
+          moci=0
+          do i=1,nmo
+             if(occ(i).gt.1.990d0.and.i.le.Ecore2.and.i.ge.Ecore)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+             endif
+          enddo
+          ihomo=moci
+          do i=1,nmo
+             if(occ(i).lt.0.010d0.and.eps(i).lt.vthr)then
+                moci=moci+1
+                do j=1,nao
+                   ca(j+(moci-1)*nao)=c(j+(i-1)*nao)
+                enddo
+                epsi(moci)=eps(i)
+             endif
+          enddo
+        endif
+      else
 ! make two cases: 1st one) eigenvectors are needed, 2) eigenvectors are not needed
       if(eigvec.or.nto) then ! we want eigenvectors to be printed out
       allocate(vecchk(nmo), stat=ierr)
@@ -245,6 +307,8 @@ c make it save
         enddo
       endif
 
+      endif
+
       no=ihomo
       nv=moci-no
       write(*,*)'oMOs in TDA: ', no
@@ -279,6 +343,11 @@ c            dipole lengths
 c
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
+      nocc=0
+      do i=1,nmo
+      nocc=nocc+idint(occ(i))
+      enddo
+      nocc=nocc/2
       open(unit=31,file='xlint',form='unformatted',status='old')
       read(31) help
       call onetri(1,help,dum,scr,ca,nao,moci)
@@ -294,6 +363,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       call onetri(1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zl)
       close(33,status='delete')
+      write(*,*)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 c
@@ -315,6 +385,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       read(36) help
       call onetri(-1,help,dum,scr,ca,nao,moci)
       call shrink(moci,dum,zm)
+      print '("Transform to MO space = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
       close(36,status='delete')
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -344,17 +416,28 @@ c            calc S^1/2 and q(GS)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       open(unit=40,file='sint',form='unformatted',status='old')
+      call cpu_time(start_time)
       read(40) help
+      call cpu_time(end_time)
+      print '("Reading sint = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
       write(*,*) 'ints done.'
       close(40,status='delete')
 
 
       write(*,*) 'S^1/2 ...'
+      call cpu_time(start_time)
       call makel(nao,help,x)
+      call cpu_time(end_time)
+      print '("S^1/2 = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
 
+      call cpu_time(start_time)
       call dgemm('n','n',nao,moci,nao,1.d0,X,nao,CA,nao,0.d0,SCR,nao)
       write(*,*) 'S^1/2 orthogonalized MO coefficients done.'
-
+      call cpu_time(end_time)
+      print '("orthogonalized = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
 c check and copy to real*4 array
       do i=1,moci
       sss=0.0d0
@@ -678,7 +761,9 @@ c just printout
       enddo
 !$omp end do
 !$omp end parallel
+      if(XsTD.eqv..false.)then
       deallocate(clow) ! orthogonalized MO coefficients not needed any more
+      endif
 !      call cpu_time(hilf)
 !      write(*,*) 'time elapsed:',hilf-time
 
@@ -711,9 +796,38 @@ c allocate A+B and A-B in packed form
       allocate( apb(nci*(nci+1)/2),ambsqr(nci*(nci+1)/2),
      .          stat=ierr )
       if(ierr.ne.0)stop 'allocation failed for A+B or A-B'
-
+      if(XsTD)then
+      if(RSH_flag)then
+      if(RSH_sub)then
+      call xstd_rpamat_RSH2(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      else
+      call xstd_rpamat_RSH(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      else
+      call xstd_rpamat(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,apb,ambsqr,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      if(FULL2PA.eqv..false.)then
+      deallocate(clow)
+      endif
+      else
+      if(full)then
+      write(*,*)'(  |  ) integrals are computed exactly'
+      call rrpamat_full(nci,ncent,no,nv,maxconf,iconf,
+     .             ak,ax,ed,apb,ambsqr,ca,nao,moci,nprims,epsi)
+      elseif(direct_full)then
+      call rrpamat_full_direct(nci,ncent,no,nv,maxconf,iconf,
+     .             ak,ax,ed,apb,ambsqr,ca,nao,moci,nprims,epsi)
+      else
       call rrpamat(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed,pia
      .             ,qia,pij,qab,apb,ambsqr)
+      endif
+      endif
 
 *****************************
 c Linear Response functions *
@@ -725,9 +839,9 @@ c Linear Response functions *
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
       close(53,status='delete')
-      if(velo_OR==.false.)call optrot(nci,apb,amb,iconf,maxconf,
+      if(velo_OR.eqv..false.)call optrot(nci,apb,amb,iconf,maxconf,
      .xl,yl,zl,moci,no,nv,xm,ym,zm,xmolw)
-      if(velo_OR==.true.)call optrot_velo(nci,apb,amb,iconf,maxconf,
+      if(velo_OR.eqv..true.)call optrot_velo(nci,apb,amb,iconf,maxconf,
      .xv,yv,zv,moci,no,nv,xm,ym,zm,xmolw)
       call cpu_time(end_time)
       print '("Opt. Rot.   Time = ",f12.2," minutes.")'
@@ -898,6 +1012,25 @@ c uci is now X, hci is Y
 *****************************
 c Lin. Response func. 2PA   *
 *****************************
+      if(FULL2PA)then
+      if(triplet) stop 'not available'
+      call cpu_time(start_time)
+      allocate( amb(nci*(nci+1)/2), stat=ierr )
+      if(ierr.ne.0)stop 'allocation failed for A-B'
+      open(unit=53,file='amb',form='unformatted',status='old')
+      read(53) amb
+      close(53,status='delete')
+      call lresp_2PA_full(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
+     .                     no,nv,eci,uci,hci,nroot,ncent,ax,nao,clow)
+      deallocate(clow)
+      call cpu_time(end_time)
+      print '("Lresp   Time = ",f12.2," minutes.")'
+     .      ,(end_time-start_time)/60.0
+      print '("sTD-DFT Time = ",f12.2," minutes.")'
+     .      ,(end_time-stda_time)/60.0
+      write(*,*)
+      CALL EXIT(0)
+      else
       if(TPA)then
       if(triplet) stop 'not available'
       call cpu_time(start_time)
@@ -905,8 +1038,7 @@ c Lin. Response func. 2PA   *
       if(ierr.ne.0)stop 'allocation failed for A-B'
       open(unit=53,file='amb',form='unformatted',status='old')
       read(53) amb
-      close(53)
-
+      close(53,status='delete')
       call lresp_2PA_SP(nci,apb,amb,iconf,maxconf,xl,yl,zl,moci,
      .                     no,nv,eci,uci,hci,nroot)
 
@@ -927,6 +1059,7 @@ c Lin. Response func. 2PA   *
       CALL EXIT(0) !important because vectors are not normalized the same way
       endif
 
+      endif
       deallocate(apb,ambsqr)
 !********************************************************************************
       open(unit=53,file='amb',form='unformatted',status='old')
@@ -942,16 +1075,45 @@ cccccccccccccccccccccccccc
 ! construct ( 0.5 * B ) for X trafo (velocity correction) and print to file *
 !********************************************************************************
       if(velcorr) then
+        if(XsTD)then
+        if(RSH_flag)then
+        call RSH_Xsrtdacorr(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed
+     .                ,clow,nao,moci)
+        else
+        call Xsrtdacorr(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed
+     .                ,clow,nao,moci)
+        endif
+        else
         call rtdacorr(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed
      .                ,pia,qia,pij,qab)
+        endif
       endif
 !********************************************************************************
 
       allocate( hci(nci,nci), stat=ierr  )
       if(ierr.ne.0)stop 'allocation failed for TDA matrix'
       write(*,*)'calculating TDA matrix ...'
+      if(XsTD)then
+      if(RSH_flag)then
+      if(RSH_sub)then
+      call Xstda_mat_RSH2(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      else
+      call Xstda_mat_RSH(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      else
+      call Xstda_mat(nci,ncent,no,nv,maxconf,iconf,
+     .ak,ax,ed,hci,alphak,betaj,xyz,nao,moci,clow,alphak,betaj,
+     .epsi)
+      endif
+      deallocate(clow)
+      else
       call rtdamat(nci,ncent,no,nv,maxconf,iconf,ak,ax,ed,pia
      .             ,qia,pij,qab,hci)
+      endif
 !      call prmat4(6,hci,nci,nci,'A-Matrix')
 !********************************************************************************
 
@@ -1339,8 +1501,10 @@ c Lin. Response func. ESA   *
 
 !       call hyperpol_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
 !      .maxconf,iconf,no,nv) !to test the moments
-!       call tpa_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
-!      .maxconf,iconf,no,nv) !idem, it gives also information about how lresp relaxes
+      if(SOS_2PA)then
+      call tpa_sos(nroot,nci,eci,uci,hci,xl,yl,zl,moci,
+     .maxconf,iconf,no,nv) !idem, it gives also information about how lresp relaxes
+      endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! optional: print eigenvectors in TM format
@@ -2007,9 +2171,9 @@ c definition they use is 1/2d^2 E/dN^2 (in Eh)
 * Given orbital indeces i1 and i2, lin() returns index in the linear array *
 ****************************************************************************
 
-      integer*4 function lin(i1,i2)
+      integer function lin(i1,i2)
       integer i1,i2
-      integer*4 idum1,idum2
+      integer idum1,idum2
       idum1=max(i1,i2)
       idum2=min(i1,i2)
       lin=idum2+idum1*(idum1-1)/2

@@ -1,20 +1,21 @@
-! This file is part of stda.
+! This file is part of std2.
 !
-! Copyright (C) 2013-2019 Stefan Grimme
+! Copyright (C) 2013-2025 Stefan Grimme and Marc de Wergifosse
 !
-! stda is free software: you can redistribute it and/or modify it under
+! std2 is free software: you can redistribute it and/or modify it under
 ! the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
 !
-! stda is distributed in the hope that it will be useful,
+! std2 is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU Lesser General Public License for more details.
 !
 ! You should have received a copy of the GNU Lesser General Public License
-! along with stda.  If not, see <https://www.gnu.org/licenses/>.
+! along with std2.  If not, see <https://www.gnu.org/licenses/>.
 !
+!! ------------------------------------------------------------------------
 ccccccccccccccccccccccccccccccccccc
 ! optional: Normalization of AOs  c
 ccccccccccccccccccccccccccccccccccc
@@ -22,14 +23,14 @@ ccccccccccccccccccccccccccccccccccc
       subroutine normalize(cartbas,nprims,ipao,ipty,exip,cxip)
       implicit none
       logical, intent ( in ) :: cartbas
-      integer, intent ( in ) :: ipao(nprims),ipty(nprims) 
+      integer, intent ( in ) :: ipao(nprims),ipty(nprims)
       integer, intent ( in ) :: nprims
-      real*8, intent( in ) :: exip(nprims) 
+      real*8, intent( in ) :: exip(nprims)
       real*8, intent( inout ) :: cxip(nprims)
       integer i,j,k,l,iprimao,iprimtyp,jprimao,jprimtyp
       integer ifac,lang,lx,my,nz
       real*8 fnorm,summe,dzaehl,dnenn,expon,xlinf
-      
+
       open(unit=11,file='fnorm')
       write(*,'(A)',advance='no') 'normalizing...'
       j=1
@@ -63,7 +64,7 @@ ccccccccccccccccccccccccccccccccccc
            dnenn=dnenn**expon
            summe=summe+dzaehl/dnenn
           enddo
-         enddo 
+         enddo
          summe=dsqrt(summe)
          fnorm=fnorm*summe
          fnorm=xlinf/fnorm
@@ -111,7 +112,7 @@ ccccccccccccccccccccccccccccccccccc
 !          enddo
 !         enddo
 !         summe=fnorm*summe
-!         write(*,*) 'self ovlp:', summe 
+!         write(*,*) 'self ovlp:', summe
 !         j=i
 !        endif
 !       endif
@@ -131,16 +132,16 @@ ccccccccccccccccccccccccccccccccccc
       my=0
       nz=0
       lang=0
-c=======================================================================        
-c cartesian gaussian functions (6d,10f...)                                      
-c s,px, py pz, dx**2 dy**2 dz**2 dxy dxz dyz                                    
-c 1 2   3   4   5     6     7     8   9  10                                     
-c fxxx, fyyy, fzzz, fxxy, fxxz, fyyx, fyyz, fxzz, fyzz, fxyz                
-c   11   12    13    14    15    16    17    18   19    20                  
+c=======================================================================
+c cartesian gaussian functions (6d,10f...)
+c s,px, py pz, dx**2 dy**2 dz**2 dxy dxz dyz
+c 1 2   3   4   5     6     7     8   9  10
+c fxxx, fyyy, fzzz, fxxy, fxxz, fyyx, fyyz, fxzz, fyzz, fxyz
+c   11   12    13    14    15    16    17    18   19    20
 c
 c assign for each ipty, the angular momentum (L), and the expinents l,m,n of x,y,z
 c linf is the factor to multiply normalized functions that are linearly dependent (e.g. dx**2,dy**2,dz**2)
-c=======================================================================        
+c=======================================================================
       select case(iprtyp)
        case(1)
         lx=0
@@ -190,14 +191,14 @@ c=======================================================================
         nz=0
         lang=2
         xlinf=dsqrt(3.0d0)
-c        xlinf=1.0d0 
+c        xlinf=1.0d0
        case(9)
         lx=1
         my=0
         nz=1
         lang=2
         xlinf=dsqrt(3.0d0)
-c        xlinf=1.0d0 
+c        xlinf=1.0d0
        case(10)
         lx=0
         my=1
@@ -304,4 +305,3 @@ cccccccccccccccccccccccccccccccccccccccccccccc
       iout=jdem/jnum
       return
       end
- 
