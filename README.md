@@ -1,4 +1,4 @@
-# *stda* program for computing excited states and response functions via simplified TD-DFT methods (sTDA, sTD-DFT, and SF-sTD-DFT)
+# *stda* program for computing excited states and response functions via simplified TD-DFT methods (sTDA, sTD-DFT, and SF-sTD-DFT)[![DOI](https://zenodo.org/badge/221426808.svg)](https://doi.org/10.5281/zenodo.4022460)
 
 This project provides the `stda` program.
 
