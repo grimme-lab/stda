@@ -1,4 +1,4 @@
-# *std2* program for computing excited states and response functions via simplified TD-DFT methods (sTDA, sTD-DFT, SF-sTD-DFT, XsTDA, XsTD-DFT, and SF-Xs-TD-DFT)
+# *std2* program for computing excited states and response functions via simplified TD-DFT methods (sTDA, sTD-DFT, SF-sTD-DFT, XsTDA, XsTD-DFT, and SF-Xs-TD-DFT)[![DOI](https://zenodo.org/badge/221426808.svg)](https://doi.org/10.5281/zenodo.4022460)
 
 This project provides the `std2` program.
 
@@ -79,7 +79,7 @@ make USEILP64=1
 ```
 Troubleshootings:
 
-In some cases, the path to libraries is a bit different and the Makefile should be adapted as 
+In some cases, the path to libraries is a bit different and the Makefile should be adapted as
 
 ```
 LIBS = -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5
@@ -211,7 +211,7 @@ See the manual on the [release page](https://github.com/grimme-lab/stda/releases
   DOI: [10.1021/acs.jpca.2c02395](https://doi.org/10.1021/acs.jpca.2c02395)
 
 - S. Löffelsender, P. Beaujean, M. de Wergifosse. Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems, *WIREs Comput Mol Sci.* **2024**, 14 (1) e1695.
-  DOI: [10.1002/wcms.1695](https://doi.org/10.1002/wcms.1695) 
+  DOI: [10.1002/wcms.1695](https://doi.org/10.1002/wcms.1695)
 
 - M. de Wergifosse, S. Grimme, The eXact integral simplified time-dependent density functional theory (XsTD-DFT), *J. Chem. Phys.*, **2024**, 160, 204110.
   DOI: [10.1063/5.0206380](https://doi.org/10.1063/5.0206380)
